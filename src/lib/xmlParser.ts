@@ -2,11 +2,14 @@ import type { Entry } from "../types";
 import { v4 as uuidv4 } from "uuid";
 
 /**
- * Parseia XML (string) e retorna lista de Entry.
- * Cada entry tem um `selector` que é um caminho baseado em tag + índice
- * para permitir localizar o mesmo nó ao re-serializar.
+ * Parseia um XML no formato Stationeers (Language -> ... -> Record -> Key/Value)
+ * Retorna { entries, xmlDocument, metadata }.
  */
-export function parseXmlToEntries(xmlString: string): { entries: Entry[]; xmlDocument: XMLDocument } {
+export function parseStationeersXml(xmlString: string): {
+  entries: Entry[];
+  xmlDocument: XMLDocument;
+  metadata: { name?: string; code?: string; font?: string };
+} {
   const parser = new DOMParser();
   const doc = parser.parseFromString(xmlString, "application/xml");
   const parsererror = doc.querySelector("parsererror");
@@ -14,89 +17,62 @@ export function parseXmlToEntries(xmlString: string): { entries: Entry[]; xmlDoc
 
   const entries: Entry[] = [];
 
-  function getNodePath(el: Element): string {
-    const parts: string[] = [];
-    let node: Element | null = el;
-    while (node && node.nodeType === 1) {
-      const parent = node.parentElement;
-      if (!parent) {
-        parts.unshift(node.nodeName);
-        break;
-      }
-      const sameTagSiblings = Array.from(parent.children).filter(c => c.nodeName === node!.nodeName);
-      const idx = sameTagSiblings.indexOf(node) + 1; // 1-based
-      parts.unshift(`${node.nodeName}:nth(${idx})`);
-      node = parent;
-    }
-    return parts.join(" > ");
+  /** Metadata from XML file */
+  const metadata: { name?: string; code?: string; font?: string } = {
+    name: doc.querySelector("Language > Name")?.textContent ?? undefined,
+    code: doc.querySelector("Language > Code")?.textContent ?? undefined,
+    font: doc.querySelector("Language > Font")?.textContent ?? undefined,
+  };
+
+  const recordNodes = Array.from(doc.getElementsByTagName("Record"));
+  for (const rec of recordNodes) {
+    const keyNode = rec.querySelector("Key");
+    const valueNode = rec.querySelector("Value");
+    if (!keyNode) continue;
+    const key = keyNode.textContent?.trim() ?? "";
+    const original = valueNode?.textContent ?? "";
+    if (key === "") continue;
+    entries.push({
+      id: uuidv4(),
+      key,
+      original,
+      translation: undefined,
+    });
   }
 
-  function traverse(el: Element) {
-    const children = Array.from(el.children);
-    if (children.length === 0) {
-      const text = el.textContent?.trim() ?? "";
-      if (text !== "") {
-        entries.push({
-          id: uuidv4(),
-          selector: getNodePath(el),
-          original: text,
-          translation: undefined,
-        });
-      }
-      return;
-    }
-    children.forEach(child => traverse(child));
-  }
-
-  traverse(doc.documentElement);
-  return { entries, xmlDocument: doc };
+  return { entries, xmlDocument: doc, metadata };
 }
 
 /**
- * Encontra um nó por selector gerado por getNodePath. Retorna Element | null.
+ * Aplica traduções por Key ao XMLDocument e retorna string XML.
+ * A função não tenta alterar nós que não tenham correspondência de Key.
  */
-function findNodeBySelector(doc: XMLDocument, selector: string): Element | null {
-  const parts = selector.split(">").map(p => p.trim());
-  let current: Element | null = doc.documentElement;
-  if (!current) return null;
-  // primeira parte pode ser doc root; se não corresponder, buscar root by name
-  const rootName = parts[0].split(":")[0];
-  if (current.nodeName !== rootName) {
-    // try to find root with that name
-    const candidates = Array.from(doc.getElementsByTagName(rootName));
-    if (candidates.length === 0) return null;
-    current = candidates[0];
-  }
-
-  for (let i = 1; i < parts.length; i++) {
-    const token = parts[i];
-    const [tagPart, nthPart] = token.split(":nth(");
-    const tag = tagPart;
-    let idx = 1;
-    if (nthPart) {
-      idx = parseInt(nthPart.replace(")", ""), 10);
-    }
-    const childrenSame = Array.from(current.children).filter(c => c.nodeName === tag);
-    current = childrenSame[idx - 1] ?? null;
-    if (!current) return null;
-  }
-  return current;
-}
-
-/**
- * Aplica um mapa de traduções (id -> translation) ao XMLDocument e retorna string XML.
- */
-export function buildTranslatedXml(doc: XMLDocument, entries: Entry[]): string {
+export function buildTranslatedStationeersXml(doc: XMLDocument, entries: Entry[]): string {
   const docCopy = doc.cloneNode(true) as XMLDocument;
+
+  // criar um mapa key -> translation (somente quando tradução presente)
+  const map = new Map<string, string>();
   for (const e of entries) {
-    if (!e.translation) continue;
-    const node = findNodeBySelector(docCopy, e.selector);
-    if (node) {
-      // Substitui apenas o texto interno
-      while (node.firstChild) node.removeChild(node.firstChild);
-      node.appendChild(docCopy.createTextNode(e.translation));
+    if (e.translation != null && e.translation !== "") {
+      map.set(e.key, e.translation);
     }
   }
+
+  const recordNodes = Array.from(docCopy.getElementsByTagName("Record"));
+  for (const rec of recordNodes) {
+    const keyNode = rec.querySelector("Key");
+    const valueNode = rec.querySelector("Value");
+    if (!keyNode || !valueNode) continue;
+    const key = keyNode.textContent?.trim() ?? "";
+    if (map.has(key)) {
+      // substitui o conteúdo textual do <Value>
+      const newText = map.get(key) ?? "";
+      // remove filhos antigos e cria um TextNode
+      while (valueNode.firstChild) valueNode.removeChild(valueNode.firstChild);
+      valueNode.appendChild(docCopy.createTextNode(newText));
+    }
+  }
+
   const serializer = new XMLSerializer();
   return serializer.serializeToString(docCopy);
 }

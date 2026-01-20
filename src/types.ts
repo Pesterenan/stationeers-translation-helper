@@ -1,6 +1,6 @@
 export interface Entry {
   id: string;
-  selector: string;
+  key: string;
   original: string;
   translation?: string;
 }
