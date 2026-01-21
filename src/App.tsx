@@ -1,71 +1,135 @@
-import React, { useState } from "react";
-import { parseStationeersXml, buildTranslatedStationeersXml } from "./lib/xmlParser";
-import { readFileAsText, downloadFile } from "./lib/fileHelpers";
+import React from "react";
+import LinearProgress, { linearProgressClasses } from "@mui/material/LinearProgress";
+import Typography from "@mui/material/Typography";
+
+import {
+  parseStationeersXml,
+  buildTranslatedStationeersXml,
+} from "./lib/xmlParser";
+import { downloadFile } from "./lib/fileHelpers";
 import type { Entry } from "./types";
-import TranslationCard from "./components/TranslationCard";
+import {
+  updateTranslation as updateTranslationHelper,
+  acceptTranslation,
+} from "./lib/entryHelpers";
+
+import FileImporter from "./components/FileImporter";
+import CardsGrid from "./components/CardsGrid";
+
+import { Box, useTheme } from "@mui/material";
 
 export default function App() {
-  const [entries, setEntries] = useState<Entry[]>([]);
-  const [xmlDoc, setXmlDoc] = useState<XMLDocument | null>(null);
-  const [metadata, setMetadata] = useState<{ name?: string; code?: string; font?: string }>({});
+  const theme = useTheme();
+  const [entries, setEntries] = React.useState<Entry[]>([]);
+  const [xmlDoc, setXmlDoc] = React.useState<XMLDocument | null>(null);
+  const [page, setPage] = React.useState<number>(1);
 
-  async function onXmlFile(file: File) {
-    const txt = await readFileAsText(file);
-    const { entries: parsedEntries, xmlDocument, metadata } = parseStationeersXml(txt);
-    setEntries(parsedEntries);
+  const savedCount = entries.filter((e) => e.status === "saved").length;
+  const total = entries.length;
+  const percent = total === 0 ? 0 : Math.round((savedCount / total) * 100);
+
+  const onXml = (text: string) => {
+    const { entries: parsedEntries, xmlDocument } = parseStationeersXml(text);
+    // inicial status/savedTranslation vazio
+    const initialized = parsedEntries.map((e) => ({
+      ...e,
+      savedTranslation: undefined,
+      status: "unchanged" as Entry["status"],
+    }));
+    setEntries(initialized);
     setXmlDoc(xmlDocument);
-    setMetadata(metadata);
-  }
+    setPage(1);
+  };
 
-  function updateTranslationByKey(key: string, value: string) {
-    setEntries(prev => prev.map(e => e.key === key ? { ...e, translation: value } : e));
-  }
+  const onProgressJson = (jsonText: string) => {
+    const obj = JSON.parse(jsonText);
+    const translations: Record<string, string> = obj.translations ?? obj;
+    setEntries((prev) =>
+      prev.map((e) => {
+        const saved = translations[e.key];
+        if (saved != null) {
+          return {
+            ...e,
+            savedTranslation: saved,
+            translation: saved,
+            status: saved ? "saved" : "unchanged",
+          };
+        }
+        return e;
+      }),
+    );
+  };
 
-  function exportProgressJson() {
-    // Mapeia por key para re-hidratar facilmente
-    const data = {
-      metadata,
-      translations: entries.reduce<Record<string, string | undefined>>((acc, e) => {
-        acc[e.key] = e.translation;
-        return acc;
-      }, {}),
-    };
-    downloadFile("progress.json", JSON.stringify(data, null, 2), "application/json;charset=utf-8");
-  }
+  const handleChange = (key: string, value: string) => {
+    setEntries((prev) =>
+      prev.map((e) => (e.key === key ? updateTranslationHelper(e, value) : e)),
+    );
+  };
 
-  function importProgressJson(file: File) {
-    readFileAsText(file).then(txt => {
-      const obj = JSON.parse(txt);
-      const translations = obj.translations ?? {};
-      setEntries(prev => prev.map(e => ({ ...e, translation: translations[e.key] ?? e.translation })));
-    });
-  }
+  const handleAccept = (key: string) => {
+    setEntries((prev) =>
+      prev.map((e) => (e.key === key ? acceptTranslation(e) : e)),
+    );
+  };
 
-  function downloadTranslatedXml() {
+  const handleExportProgress = () => {
+    const translations = entries.reduce<Record<string, string>>((acc, e) => {
+      if (e.savedTranslation) acc[e.key] = e.savedTranslation;
+      return acc;
+    }, {});
+    downloadFile(
+      "progress.json",
+      JSON.stringify({ translations }, null, 2),
+      "application/json;charset=utf-8",
+    );
+  };
+
+  const handleSaveAll = () => {
+    // marca todos edited como saved
+    setEntries((prev) =>
+      prev.map((e) => (e.status === "edited" ? acceptTranslation(e) : e)),
+    );
+  };
+
+  const handleDownloadTranslatedXml = () => {
     if (!xmlDoc) return alert("Nenhum XML carregado");
     const xml = buildTranslatedStationeersXml(xmlDoc, entries);
     downloadFile("translated.xml", xml, "text/xml;charset=utf-8");
-  }
+  };
 
   return (
     <div>
       <h1>Stationeers Translation Helper</h1>
-      <div>
-        <input type="file" accept=".xml" onChange={e => e.target.files && onXmlFile(e.target.files[0])} />
-        <input type="file" accept=".json" onChange={e => e.target.files && importProgressJson(e.target.files[0])} />
-      </div>
+      <FileImporter onXml={onXml} onProgressJson={onProgressJson} />
+      {/* botões de salvar/exportar */}
+      <button onClick={handleExportProgress}>Exportar Progresso (JSON)</button>
+      <button onClick={handleSaveAll}>Salvar Tudo (Aceitar)</button>
+      <button onClick={handleDownloadTranslatedXml}>
+        Baixar XML traduzido
+      </button>
 
-      <div>
-        <button onClick={exportProgressJson}>Exportar progresso (JSON)</button>
-        <button onClick={downloadTranslatedXml}>Baixar XML traduzido</button>
-      </div>
+      {/* <div> */}
+      {/*   <button onClick={exportProgressJson}>Exportar progresso (JSON)</button> */}
+      {/*   <button onClick={downloadTranslatedXml}>Baixar XML traduzido</button> */}
+      {/* </div> */}
 
-      <div>
-        <h2>Entradas ({entries.length})</h2>
-        {entries.map(e => (
-          <TranslationCard key={e.id} entry={e} onChange={updateTranslationByKey} />
-        ))}
-      </div>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2">{`Progresso: ${savedCount}/${total} (${percent}%)`}</Typography>
+          <LinearProgress variant="determinate" value={percent} sx={{
+          height: 8,
+        borderRadius: 4,
+        backgroundColor: theme.palette.action.disabledBackground,
+        [`& .${linearProgressClasses.bar}`]: {
+            borderRadius: 4,
+          }}}/>
+        </Box>
+      <CardsGrid
+        entries={entries}
+        page={page}
+        onPageChange={setPage}
+        onChange={handleChange}
+        onAccept={handleAccept}
+      />
     </div>
   );
 }
