@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { parseStationeersXml, buildTranslatedStationeersXml } from "./lib/xmlParser";
 import { readFileAsText, downloadFile } from "./lib/fileHelpers";
 import type { Entry } from "./types";
+import TranslationCard from "./components/TranslationCard";
 
 export default function App() {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -62,11 +63,7 @@ export default function App() {
       <div>
         <h2>Entradas ({entries.length})</h2>
         {entries.map(e => (
-          <div key={e.id}>
-            <div style={{ fontSize: 12, color: "#666" }}>{e.key}</div>
-            <div>{e.original}</div>
-            <textarea value={e.translation ?? ""} onChange={ev => updateTranslationByKey(e.key, ev.target.value)} />
-          </div>
+          <TranslationCard key={e.id} entry={e} onChange={updateTranslationByKey} />
         ))}
       </div>
     </div>
