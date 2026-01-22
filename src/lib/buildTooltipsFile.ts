@@ -1,42 +1,23 @@
-import { type Entry } from "../types";
+import { type Entry, type IMetadata } from "../types";
+import { DEFAULT_WRAPPERS_MAIN, ENTRY_WRAPPERS } from "./fileLayout";
+import { buildXmlDocument } from "./xmlHelpers";
 
 export function buildTooltipsXml(
-  metadata: { Language?: string; Code?: string; Font?: string },
+  metadata: IMetadata,
   entries: Entry[]
 ): string {
-  const doc = document.implementation.createDocument("", "", null);
-
-  const langEl = doc.createElement("Language");
-  langEl.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-  langEl.setAttribute("xmlns:xsd", "http://www.w3.org/2001/XMLSchema");
-
-  if (metadata.Language) {
-    const nameEl = doc.createElement("Name");
-    nameEl.appendChild(doc.createTextNode(metadata.Language));
-    langEl.appendChild(nameEl);
-  }
-
-  if (metadata.Code) {
-    const codeEl = doc.createElement("Code");
-    codeEl.appendChild(doc.createTextNode(metadata.Code));
-    langEl.appendChild(codeEl);
-  }
-
-  if (metadata.Font) {
-    const fontEl = doc.createElement("Font");
-    fontEl.appendChild(doc.createTextNode(metadata.Font));
-    langEl.appendChild(fontEl);
-  }
-
-  const wrapper = doc.createElement("ScreenSpaceToolTips");
+  const doc = buildXmlDocument(metadata);
+  const langEl = doc.querySelector('Language')!;
+console.log(langEl, 'langEl');
+  const wrapper = doc.createElement(DEFAULT_WRAPPERS_MAIN.screenSpaceToolTips);
 
   for (const e of entries) {
-    const record = doc.createElement("Record");
+    const record = doc.createElement(ENTRY_WRAPPERS.record);
 
-    const keyEl = doc.createElement("Key");
+    const keyEl = doc.createElement(ENTRY_WRAPPERS.key);
     keyEl.appendChild(doc.createTextNode(e.key));
 
-    const valueEl = doc.createElement("Value");
+    const valueEl = doc.createElement(ENTRY_WRAPPERS.value);
     valueEl.appendChild(
       doc.createTextNode(
         e.savedTranslation ??
@@ -52,7 +33,6 @@ export function buildTooltipsXml(
   }
 
   langEl.appendChild(wrapper);
-  doc.appendChild(langEl);
 
   const serializer = new XMLSerializer();
   return (

@@ -15,6 +15,8 @@ export async function exportFinalFilesAsZip(
   categoriesMap: Record<string, Entry[]>,
   options?: { zipName?: string }
 ) {
+console.log('METADATA', metadata);
+console.log('CATEGORIES', categoriesMap);
   const lang = (metadata.Language ?? "language").toLowerCase();
   const code = metadata.Code ?? "";
 

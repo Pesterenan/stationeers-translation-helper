@@ -23,11 +23,10 @@ export default function App() {
   const [xmlDoc, setXmlDoc] = React.useState<XMLDocument | null>(null);
   const [metadata, setMetadata] = React.useState<Record<string, string | undefined> | undefined>(undefined);
   const [page, setPage] = React.useState<number>(1);
-  const [rules, setRules] = React.useState(DEFAULT_CATEGORY_RULES);
 
   // categories será recalculado quando entries ou rules mudarem
-  const categories = React.useMemo(() => categorizeEntries(entries, rules), [entries, rules]);
-
+  const categories = React.useMemo(() => categorizeEntries(entries, DEFAULT_CATEGORY_RULES), [entries]);
+  
   // progresso
   const savedCount = React.useMemo(() => entries.filter((e) => e.status === "saved").length, [entries]);
   const total = entries.length;

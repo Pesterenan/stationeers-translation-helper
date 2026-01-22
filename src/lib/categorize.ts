@@ -24,12 +24,13 @@ export function categorizeEntries(
       }
       if (matched) break;
     }
-    if (!matched) {
-      // fallback: se houver category 'other'
-      if (categories["other"]) categories["other"].push(e);
-      else (categories["other"] = categories["other"] || []).push(e);
-    }
+    // if (!matched) {
+    //   // fallback: se houver category 'other'
+    //   if (categories["other"]) categories["other"].push(e);
+    //   else (categories["other"] = categories["other"] || []).push(e);
+    // }
   }
 
+  console.log('CATEGORIES', categories.tooltips);
   return categories;
 }

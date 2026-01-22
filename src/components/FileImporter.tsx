@@ -38,7 +38,7 @@ const FileImporter: React.FC<Props> = ({ onXml, onResx, onProgressJson }) => {
       }
     }
     // limpar input para permitir re-upload do mesmo arquivo
-    e.currentTarget.value = "";
+    e.target.value = "";
   };
 
   return (

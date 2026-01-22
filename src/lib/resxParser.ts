@@ -26,6 +26,7 @@ export function parseResxToEntries(resxString: string): {
     // metadata keys
     if (name === "Language" || name === "Code" || name === "Font") {
       metadata[name] = value;
+      continue;
     }
     // compor Entry (usamos name como key)
     entries.push({
