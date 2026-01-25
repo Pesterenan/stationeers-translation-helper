@@ -1,38 +1,24 @@
 import { type Entry } from "../types";
+import { DEFAULT_WRAPPERS_MAIN } from "./fileLayout";
+import { buildXmlDocument } from "./xmlHelpers";
 
 export function buildTipsXml(
   metadata: { Code?: string },
   entries: Entry[]
 ): string {
-  const doc = document.implementation.createDocument("", "", null);
+  const doc = buildXmlDocument(metadata);
+  const langEl = doc.querySelector('Language')!;
 
-  const langEl = doc.createElement("Language");
-  langEl.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-  langEl.setAttribute("xmlns:xsd", "http://www.w3.org/2001/XMLSchema");
-
-  // Code obrigatório
-  if (metadata.Code) {
-    const codeEl = doc.createElement("Code");
-    codeEl.appendChild(doc.createTextNode(metadata.Code));
-    langEl.appendChild(codeEl);
-  }
-
-  const gameTipEl = doc.createElement("GameTip");
+  const wrapper = doc.createElement(DEFAULT_WRAPPERS_MAIN.gameTip);
 
   for (const e of entries) {
+    const value = e.savedTranslation ?? e.translation ?? e.original ?? "";
     const strEl = doc.createElement("String");
-    const text =
-      e.savedTranslation ??
-      e.translation ??
-      e.original ??
-      "";
-
-    strEl.appendChild(doc.createTextNode(text));
-    gameTipEl.appendChild(strEl);
+    strEl.appendChild(doc.createTextNode(value));
+    wrapper.appendChild(strEl);
   }
 
-  langEl.appendChild(gameTipEl);
-  doc.appendChild(langEl);
+  langEl.appendChild(wrapper);
 
   const serializer = new XMLSerializer();
   return (

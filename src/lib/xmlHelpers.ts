@@ -1,16 +1,16 @@
 import { type IMetadata } from "../types";
-import { DEFAULT_HEADER_WRAPPERS } from "./fileLayout";
+import { DEFAULT_HEADER_WRAPPERS, ENTRY_WRAPPERS } from "./fileLayout";
 
 export function createRecordElement(
   doc: XMLDocument,
   key: string,
-  text: string,
+  value: string,
 ) {
-  const record = doc.createElement("Record");
-  const keyEl = doc.createElement("Key");
+  const record = doc.createElement(ENTRY_WRAPPERS.record);
+  const keyEl = doc.createElement(ENTRY_WRAPPERS.key);
+  const valueEl = doc.createElement(ENTRY_WRAPPERS.value);
   keyEl.appendChild(doc.createTextNode(key));
-  const valueEl = doc.createElement("Value");
-  valueEl.appendChild(doc.createTextNode(text ?? ""));
+  valueEl.appendChild(doc.createTextNode(value ?? ""));
   record.appendChild(keyEl);
   record.appendChild(valueEl);
   return record;

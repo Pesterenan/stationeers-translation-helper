@@ -7,15 +7,19 @@ export interface Entry {
   translation?: string;
   savedTranslation?: string;
   status?: EntryStatus;
+  section?: string;
+  subkey?: string | null;
+  selector?: string;
 }
 
 export const DEFAULT_CATEGORY_RULES: Record<string, RegExp[]> = {
-  tooltips: [/^ScreenSpaceToolTip/],
+  tooltips: [/^ScreenSpaceToolTip_/],
   tips: [/^Interface_/],
   help: [/^Help_/],
-  keys: [/^Key_.*(page\d)$/],
+  keys: [/^Key_.*_(page\d)$/],
   reagents: [/^Reagent_/],
   ui: [/^UI_|^Ui_/, /^Window_/],
+  other: [/.*/],
 };
 
 export interface IMetadata {

@@ -1,18 +1,12 @@
-import { type Entry } from "../types";
+import { type Entry, type IMetadata } from "../types";
+import { DEFAULT_WRAPPERS_MAIN } from "./fileLayout";
+import { buildXmlDocument } from "./xmlHelpers";
 
-export function buildHelpXml(metadata: { Code?: string }, entries: Entry[]) {
-  const doc = document.implementation.createDocument("", "", null);
-  const langEl = doc.createElement("Language");
-  langEl.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-  langEl.setAttribute("xmlns:xsd", "http://www.w3.org/2001/XMLSchema");
+export function buildHelpXml(metadata: IMetadata, entries: Entry[]) {
+  const doc = buildXmlDocument(metadata);
+  const langEl = doc.querySelector("Language")!;
 
-  if (metadata.Code) {
-    const codeEl = doc.createElement("Code");
-    codeEl.appendChild(doc.createTextNode(metadata.Code));
-    langEl.appendChild(codeEl);
-  }
-
-  const helpPage = doc.createElement("HelpPage");
+  const wrapper = doc.createElement(DEFAULT_WRAPPERS_MAIN.helpPage);
 
   // adicionar páginas fixas necessárias
   function makeStationpediaPage(key: string, title = key, text = " ") {
@@ -22,8 +16,8 @@ export function buildHelpXml(metadata: { Code?: string }, entries: Entry[]) {
     const tx = doc.createElement("Text"); tx.appendChild(doc.createTextNode(text)); sp.appendChild(tx);
     return sp;
   }
-  helpPage.appendChild(makeStationpediaPage("Home", "Home", " "));
-  helpPage.appendChild(makeStationpediaPage("Search", "Search", " "));
+  wrapper.appendChild(makeStationpediaPage("Home", "Home", " "));
+  wrapper.appendChild(makeStationpediaPage("Search", "Search", " "));
 
   // agrupar entries por base (ex: Help_Foo_Title / Help_Foo_Text)
   const pages: Record<string, { title?: string; text?: string }> = {};
@@ -51,11 +45,14 @@ export function buildHelpXml(metadata: { Code?: string }, entries: Entry[]) {
     const k = doc.createElement("Key"); k.appendChild(doc.createTextNode(base)); pageEl.appendChild(k);
     const t = doc.createElement("Title"); t.appendChild(doc.createTextNode(info.title ?? base)); pageEl.appendChild(t);
     const tx = doc.createElement("Text"); tx.appendChild(doc.createTextNode(info.text ?? " ")); pageEl.appendChild(tx);
-    helpPage.appendChild(pageEl);
+    wrapper.appendChild(pageEl);
   }
 
-  langEl.appendChild(helpPage);
-  doc.appendChild(langEl);
+  langEl.appendChild(wrapper);
+
   const serializer = new XMLSerializer();
-  return '<?xml version="1.0" encoding="utf-8"?>\n' + serializer.serializeToString(doc);
+  return (
+    '<?xml version="1.0" encoding="utf-8"?>\n' +
+    serializer.serializeToString(doc)
+  );
 }

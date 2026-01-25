@@ -3,18 +3,16 @@ import LinearProgress, { linearProgressClasses } from "@mui/material/LinearProgr
 import Typography from "@mui/material/Typography";
 import { Box, Button, useTheme } from "@mui/material";
 
-import { parseStationeersXml, buildTranslatedStationeersXml } from "./lib/xmlParser";
+import { parseStationeersXml, buildTranslatedStationeersXml,  updateMetadataInXml } from "./lib/xmlParser";
 import { downloadFile } from "./lib/fileHelpers";
-import { DEFAULT_CATEGORY_RULES, type Entry } from "./types";
+import { type Entry } from "./types";
 import { updateTranslation as updateTranslationHelper, acceptTranslation } from "./lib/entryHelpers";
 
 import FileImporter from "./components/FileImporter";
 import CardsGrid from "./components/CardsGrid";
 
-import { parseResxToEntries } from "./lib/resxParser";
-import { categorizeEntries } from "./lib/categorize";
-import { exportCategoriesAsFiles } from "./lib/exporters";
 import { exportFinalFilesAsZip } from "./lib/exportAllFiles";
+import MetadataCard from './components/MetadataCard';
 
 export default function App() {
   const theme = useTheme();
@@ -25,33 +23,19 @@ export default function App() {
   const [page, setPage] = React.useState<number>(1);
 
   // categories será recalculado quando entries ou rules mudarem
-  const categories = React.useMemo(() => categorizeEntries(entries, DEFAULT_CATEGORY_RULES), [entries]);
-  
+  const categories = React.useMemo(() => {
+    return entries.reduce<Record<string,Entry[]>>((acc, entry) => {
+      const key = entry.section;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(entry);
+      return acc;
+    }, {});
+  }, [entries]);
+
   // progresso
   const savedCount = React.useMemo(() => entries.filter((e) => e.status === "saved").length, [entries]);
   const total = entries.length;
   const percent = total === 0 ? 0 : Math.round((savedCount / total) * 100);
-
-  // ---- parsers ----
-  const onResx = React.useCallback((text: string) => {
-    try {
-      const { entries: parsedEntries, metadata: parsedMetadata, xmlDocument } = parseResxToEntries(text);
-
-      const initialized = parsedEntries.map((e) => ({
-        ...e,
-        savedTranslation: undefined,
-        status: "unchanged" as Entry["status"],
-      }));
-
-      setEntries(initialized);
-      setXmlDoc(xmlDocument);
-      setMetadata(parsedMetadata);
-      setPage(1);
-    } catch (err: any) {
-      console.error("Erro ao parsear .resx:", err);
-      alert("Erro ao parsear .resx: " + (err?.message ?? String(err)));
-    }
-  }, []);
 
   const onXml = React.useCallback((text: string) => {
     try {
@@ -121,7 +105,8 @@ export default function App() {
     if (!xmlDoc) return alert("Nenhum XML carregado");
     try {
       const xml = buildTranslatedStationeersXml(xmlDoc, entries);
-      downloadFile("translated.xml", xml, "text/xml;charset=utf-8");
+      const fileName = metadata?.Language?.toLocaleLowerCase().replaceAll(/\ /g, '-') ?? 'translated';
+      downloadFile(`${fileName}.xml`, xml, "text/xml;charset=utf-8");
     } catch (err: any) {
       console.error("Erro ao gerar XML traduzido:", err);
       alert("Erro ao gerar XML traduzido: " + (err?.message ?? String(err)));
@@ -148,7 +133,7 @@ export default function App() {
       <h1>Stationeers Translation Helper</h1>
 
       <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
-        <FileImporter onResx={onResx} onXml={onXml} onProgressJson={onProgressJson} />
+        <FileImporter onXml={onXml} onProgressJson={onProgressJson} />
         <Button variant="outlined" onClick={handleExportProgress} disabled={entries.length === 0}>
           Exportar Progresso (JSON)
         </Button>
@@ -177,18 +162,24 @@ export default function App() {
         />
       </Box>
 
-      {/* mostrar metadados básicos */}
-      {metadata && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="caption">Language: {metadata.Language ?? "-"}</Typography>
-          <Typography variant="caption" sx={{ ml: 2 }}>
-            Code: {metadata.Code ?? "-"}
-          </Typography>
-          <Typography variant="caption" sx={{ ml: 2 }}>
-            Font: {metadata.Font ?? "-"}
-          </Typography>
-        </Box>
-      )}
+      <MetadataCard
+        metadata={metadata}
+        onUpdate={(m) => setMetadata(m)}
+        onApplyToXml={() => {
+          if (!xmlDoc || !metadata) return;
+          const updatedXml = updateMetadataInXml(xmlDoc, metadata);
+          // opcional: você pode reparsear (parseStationeersXml) o xml atualizado para atualizar xmlDoc entries, 
+          // ou apenas usar updatedXml no export.
+          // Exemplo: substituir xmlDoc com parsed updatedXml:
+          try {
+            const { xmlDocument } = parseStationeersXml(updatedXml);
+            setXmlDoc(xmlDocument);
+          } catch (e) {
+            console.error("Erro ao aplicar metadados no XML:", e);
+            alert("Erro ao aplicar metadados no XML: " + String(e));
+          }
+        }}
+      />
 
       <CardsGrid entries={entries} page={page} onPageChange={setPage} onChange={handleChange} onAccept={handleAccept} />
     </div>
