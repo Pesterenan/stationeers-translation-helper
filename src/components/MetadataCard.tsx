@@ -1,71 +1,126 @@
-import React from "react";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import Typography from "@mui/material/Typography";
-import TextField from "@mui/material/TextField";
+import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import Tooltip from "@mui/material/Tooltip";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import InputAdornment from "@mui/material/InputAdornment";
+import Paper from "@mui/material/Paper";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Select from "@mui/material/Select";
 
 type Props = {
   metadata: { Language?: string; Code?: string; Font?: string } | undefined;
   onUpdate: (upd: { Language?: string; Code?: string; Font?: string }) => void;
-  onApplyToXml?: () => void; // opcional: aplica imediatamente no xml carregado
 };
 
-const MetadataCard: React.FC<Props> = ({ metadata, onUpdate, onApplyToXml }) => {
-  const [local, setLocal] = React.useState<{ Language?: string; Code?: string; Font?: string }>(
-    metadata ?? {}
-  );
+const FONT_OPTIONS = [
+  { value: "font_english", label: "English (Latin Padrão)" },
+  { value: "font_extended", label: "Extended (Latino com Acentos)" },
+  { value: "font_russian", label: "Russian (Cirílico)" },
+  { value: "font_cjk", label: "CJK (Chinês, Japonês, Coreano)" },
+];
 
-  React.useEffect(() => setLocal(metadata ?? {}), [metadata]);
+const MetadataCard: React.FC<Props> = ({ metadata, onUpdate }) => {
+  const [local, setLocal] = useState<{ Language?: string; Code?: string; Font?: string }>(metadata ?? {});
 
-  const change = (k: keyof typeof local, v: string) => {
-    const next = { ...local, [k]: v };
+  useEffect(() => {
+    setLocal(metadata ?? {});
+  }, [metadata]);
+
+  const handleChange = (field: keyof typeof local, value: string) => {
+    const next = { ...local, [field]: value };
     setLocal(next);
-    onUpdate(next);
+    // Para o Select, atualizamos o pai imediatamente para uma UX melhor
+    if (field === "Font") {
+      onUpdate(next);
+    }
   };
 
+  const handleBlur = () => {
+    onUpdate(local);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleBlur();
+    }
+  };
+
+  if (!metadata) return null;
+
   return (
-    <Card sx={{ alignSelf: 'flex-start', position: "sticky", right: 16, top: 16, width: 320, zIndex: 50 }}>
-      <CardContent>
-        <Typography variant="h6">Metadados</Typography>
+    <Paper
+      elevation={0}
+      variant="outlined"
+      sx={{
+        p: 2,
+        mb: 2,
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 2,
+        alignItems: "center",
+        bgcolor: "background.default",
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
+        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary">
+          CONFIGURAÇÃO DO IDIOMA
+        </Typography>
+      </Box>
 
-        <Box sx={{ mt: 1 }}>
-          <TextField
-            label="Language (Name)"
-            fullWidth
-            size="small"
-            value={local.Language ?? ""}
-            onChange={(e) => change("Language", e.target.value)}
-            sx={{ mb: 1 }}
-          />
-          <TextField
-            label="Code (ex: EN, PT)"
-            fullWidth
-            size="small"
-            value={local.Code ?? ""}
-            onChange={(e) => change("Code", e.target.value)}
-            sx={{ mb: 1 }}
-          />
-          <TextField
-            label="Font"
-            fullWidth
-            size="small"
-            value={local.Font ?? ""}
-            onChange={(e) => change("Font", e.target.value)}
-            sx={{ mb: 1 }}
-          />
-        </Box>
+      <TextField
+        label="Nome (Language)"
+        size="small"
+        value={local.Language ?? ""}
+        onChange={(e) => handleChange("Language", e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        placeholder="Ex: Português"
+        sx={{ width: 200 }}
+      />
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 1 }}>
-          {onApplyToXml && (
-            <Button size="small" variant="outlined" onClick={onApplyToXml}>
-              Aplicar no XML
-            </Button>
-          )}
-        </Box>
-      </CardContent>
-    </Card>
+      <TextField
+        label="Código (Code)"
+        size="small"
+        value={local.Code ?? ""}
+        onChange={(e) => handleChange("Code", e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        placeholder="Ex: PT-BR"
+        sx={{ width: 120 }}
+      />
+
+      <FormControl size="small" sx={{ width: 240 }}>
+        <InputLabel id="font-select-label">Fonte (Font)</InputLabel>
+        <Select
+          labelId="font-select-label"
+          value={local.Font ?? "font_english"}
+          label="Fonte (Font)"
+          onChange={(e) => handleChange("Font", e.target.value)}
+          onBlur={handleBlur}
+          endAdornment={
+            <InputAdornment position="end" sx={{ mr: 2 }}>
+               <Tooltip title="Define o conjunto de caracteres suportado. Use 'font_extended' para Português se notar caracteres faltando.">
+                  <InfoOutlinedIcon fontSize="small" color="action" style={{ cursor: 'help' }} />
+                </Tooltip>
+            </InputAdornment>
+          }
+        >
+          {FONT_OPTIONS.map((opt) => (
+            <MenuItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <Typography variant="caption" color="text.secondary" sx={{ ml: "auto" }}>
+        Dica: Use <b>font_extended</b> para garantir suporte a acentos (á, é, õ, ç).
+      </Typography>
+    </Paper>
   );
 };
 

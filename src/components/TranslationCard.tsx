@@ -21,12 +21,17 @@ type Props = {
 const TranslationCardInner: React.FC<Props> = ({ entry, onChange, onAccept }) => {
   const theme = useTheme();
 
-  // derive baseKey and show subkey if available
-  const baseKey = entry.subkey ? entry.key.replace(new RegExp(`_${entry.subkey}$`), "") : entry.key;
+  // Use recordKey if available, otherwise fallback to parsing key or full key
+  const displayKey = entry.recordKey ?? entry.key;
   const subkeyLabel = entry.subkey ?? null;
 
   // local buffer for smooth typing
   const [translation, setTranslation] = useState(entry.translation ?? "");
+
+  // Update local state if prop changes (e.g. from JSON import)
+  useEffect(() => {
+    setTranslation(entry.translation ?? "");
+  }, [entry.translation]);
 
   // background by status using theme
   const backgroundColor =
@@ -38,7 +43,7 @@ const TranslationCardInner: React.FC<Props> = ({ entry, onChange, onAccept }) =>
 
   // decide if should be multiline (descriptions / text or long original)
   const shouldMultiline =
-    (entry.subkey && ["Description", "Text"].includes(entry.subkey)) || (entry.original?.length ?? 0) > 120;
+    (entry.subkey && ["Description", "Text"].includes(entry.subkey)) || (entry.original?.length ?? 0) > 60;
 
   const commitChange = useCallback(() => {
     // only call onChange when value actually differs from entry.translation
@@ -70,23 +75,30 @@ const TranslationCardInner: React.FC<Props> = ({ entry, onChange, onAccept }) =>
     <Card variant="elevation" sx={{ backgroundColor, transition: "background-color 0.2s ease" }}>
       <CardContent>
         <Grid container alignItems="center" spacing={1}>
-          <Grid size="auto">
-            <Typography component="div" fontWeight="bold" variant="body2">
-              {baseKey}
+          <Grid size="auto" sx={{ flexGrow: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 0.5 }}>
+              <Typography component="span" fontWeight="bold" variant="body2">
+                {displayKey}
+              </Typography>
               {subkeyLabel && (
-                <Typography component="span" variant="caption" sx={{ ml: 1, fontStyle: "italic" }}>
-                  [{subkeyLabel}]
+                <Typography component="span" variant="caption" sx={{ 
+                    fontFamily: 'monospace', 
+                    bgcolor: 'action.hover', 
+                    px: 0.5, 
+                    borderRadius: 1 
+                }}>
+                  {subkeyLabel}
                 </Typography>
               )}
-            </Typography>
+            </Box>
             <Typography component="div" variant="caption" color="text.secondary">
-              {entry.section ?? "—"}
+              {entry.section} &bull; {entry.tagName}
             </Typography>
           </Grid>
 
           <Grid>
             <Tooltip title="Copiar original para o campo">
-              <Button size="small" onClick={handleCopyOriginal} aria-label="copiar original">
+              <Button size="small" onClick={handleCopyOriginal} aria-label="copiar original" sx={{ minWidth: 32 }}>
                 <ContentCopyIcon fontSize="small" />
               </Button>
             </Tooltip>
@@ -103,7 +115,7 @@ const TranslationCardInner: React.FC<Props> = ({ entry, onChange, onAccept }) =>
         </Box>
 
         <Grid container alignItems="center" spacing={1} sx={{ mt: 1 }} onKeyDown={handleKeyDown}>
-          <Grid size="auto">
+          <Grid size="grow">
             <TextField
               fullWidth
               multiline={shouldMultiline}
@@ -122,9 +134,9 @@ const TranslationCardInner: React.FC<Props> = ({ entry, onChange, onAccept }) =>
                 size="small"
                 variant="contained"
                 onClick={handleAccept}
-                startIcon={<CheckIcon />}
+                sx={{ minWidth: 40, p: 1 }}
               >
-                Aceitar
+                <CheckIcon fontSize="small" />
               </Button>
             </Tooltip>
           </Grid>
