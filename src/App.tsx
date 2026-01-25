@@ -14,6 +14,7 @@ import {
   Chip,
   Backdrop,
   CircularProgress,
+  Grid,
 } from "@mui/material";
 
 import {
@@ -340,7 +341,7 @@ export default function App() {
           >
             {sections.map((sec) => {
               const count = categories[sec]?.length ?? 0;
-              // Opcional: mostrar count editado/salvo por seção? Por enquanto só total.
+              const edited = categories[sec].reduce((acc, entry) => entry.status === "saved" ? acc + 1 : acc, 0);
               return (
                 <Tab
                   key={sec}
@@ -349,7 +350,7 @@ export default function App() {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       {sec}
                       <Chip
-                        label={count}
+                        label={edited ? `${edited}/${count}` : count}
                         size="small"
                         variant="filled"
                         sx={{ height: 20, fontSize: "0.7rem" }}
@@ -384,7 +385,10 @@ export default function App() {
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
         open={isLoading}
       >
-        <CircularProgress color="inherit" />
+        <Grid alignItems="center" container flexDirection="column" gap={2} justifyContent="center">
+          <Typography variant="h4">Carregando arquivo</Typography>
+          <CircularProgress color="inherit" />
+        </Grid>
       </Backdrop>
     </Container>
   );

@@ -25,9 +25,9 @@ type Props = {
 const OriginalTextDisplay: React.FC<{ text: string; onTagClick: (tag: string) => void }> = ({ text, onTagClick }) => {
   if (!text) return null;
 
-  // Regex para capturar tags como {LINK:Page;Text}, {THING:Prefab}, etc.
-  // Usamos (?:...) para não criar um grupo de captura extra para o prefixo no split.
-  const parts = text.split(/(\{(?:[A-Z]+)[:_]+[^}]+\})/g);
+  // Regex para capturar tags como {LINK:Page;Text}, {THING:Prefab}, {LIST_OF_RESOURCES}, etc.
+  // Suporta tags com ou sem dois pontos.
+  const parts = text.split(/(\{(?:[A-Z_]+)(?::[^\}]*)?\})/g);
 
   return (
     <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 0.5, lineHeight: 1.6 }}>
@@ -144,11 +144,23 @@ const TranslationCardInner: React.FC<Props> = ({ entry, index, onChange, onAccep
       
       setTranslation(newText);
       
-      // Re-focar e posicionar cursor após a tag inserida
+      // Re-focar e posicionar cursor ou seleção após a tag inserida
       setTimeout(() => {
         input.focus();
-        const newPos = start + tag.length;
-        input.setSelectionRange(newPos, newPos);
+        
+        // Verifica se a tag tem a parte traduzível (após o ponto e vírgula)
+        // Ex: {LINK:ConstructionPage;Construction}
+        const semiIndex = tag.indexOf(';');
+        if (semiIndex !== -1) {
+          // Selecionar o texto entre o ';' e o '}'
+          const selStart = start + semiIndex + 1;
+          const selEnd = start + tag.length - 1;
+          input.setSelectionRange(selStart, selEnd);
+        } else {
+          // Caso contrário, apenas move o cursor para o fim da tag
+          const newPos = start + tag.length;
+          input.setSelectionRange(newPos, newPos);
+        }
       }, 0);
     } else {
       setTranslation(prev => prev + tag);
