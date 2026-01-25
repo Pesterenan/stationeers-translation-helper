@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import LinearProgress, { linearProgressClasses } from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
-import { Box, Button, useTheme, Container, Grid, Paper } from "@mui/material";
+import { Box, Button, useTheme, Container, Paper, Tabs, Tab, Chip } from "@mui/material";
 
 import { parseStationeersXml, buildTranslatedStationeersXml, updateMetadataInXml } from "./lib/xmlParser";
 import { downloadFile } from "./lib/fileHelpers";
@@ -20,19 +20,38 @@ export default function App() {
   const [entries, setEntries] = React.useState<Entry[]>([]);
   const [xmlDoc, setXmlDoc] = React.useState<XMLDocument | null>(null);
   const [metadata, setMetadata] = React.useState<Record<string, string | undefined> | undefined>(undefined);
+  
+  // Paginação agora é relativa à seção ativa
   const [page, setPage] = React.useState<number>(1);
+  const [activeSection, setActiveSection] = React.useState<string>("");
 
-  // categories será recalculado quando entries ou rules mudarem
+  // Agrupa entries por seção
   const categories = React.useMemo(() => {
-    return entries.reduce<Record<string, Entry[]>>((acc, entry) => {
+    const grouped = entries.reduce<Record<string, Entry[]>>((acc, entry) => {
       const key = entry.section;
       if (!acc[key]) acc[key] = [];
       acc[key].push(entry);
       return acc;
     }, {});
+    
+    // Ordena as chaves alfabeticamente para as abas ficarem estáveis
+    // Mas podemos forçar algumas (como 'HelpPage' ou 'GameTip') para o fim se quisermos.
+    return grouped;
   }, [entries]);
 
-  // progresso
+  const sections = React.useMemo(() => Object.keys(categories).sort(), [categories]);
+
+  // Se a seção ativa não existir mais (ex: novo arquivo carregado), reseta para a primeira
+  useEffect(() => {
+    if (sections.length > 0 && !categories[activeSection]) {
+      setActiveSection(sections[0]);
+      setPage(1);
+    } else if (sections.length === 0) {
+      setActiveSection("");
+    }
+  }, [sections, activeSection, categories]);
+
+  // progresso global
   const savedCount = React.useMemo(() => entries.filter((e) => e.status === "saved").length, [entries]);
   const total = entries.length;
   const percent = total === 0 ? 0 : Math.round((savedCount / total) * 100);
@@ -51,6 +70,7 @@ export default function App() {
       setXmlDoc(xmlDocument);
       setMetadata(meta);
       setPage(1);
+      // activeSection será setado pelo useEffect acima
     } catch (err: any) {
       console.error("Erro ao parsear XML:", err);
       alert("Erro ao parsear XML: " + (err?.message ?? String(err)));
@@ -105,18 +125,12 @@ export default function App() {
   const handleDownloadTranslatedXml = React.useCallback(() => {
     if (!xmlDoc) return alert("Nenhum XML carregado");
     try {
-      // Primeiro aplica os metadados atuais ao XMLDoc antes de gerar
       let docToUse = xmlDoc;
       if (metadata) {
          const updatedXmlStr = updateMetadataInXml(xmlDoc, metadata);
-         // Reparse simples para ter o doc atualizado (ou altere updateMetadataInXml para retornar doc)
-         // Como updateMetadataInXml retorna string, vamos usar parseStationeersXml (apenas para pegar o doc)
-         // Esta é uma operação um pouco pesada, mas segura. 
-         // Alternativa: updateMetadataInXml poderia modificar o doc in-place se quiséssemos.
          const { xmlDocument } = parseStationeersXml(updatedXmlStr);
          docToUse = xmlDocument;
       }
-
       const xml = buildTranslatedStationeersXml(docToUse, entries);
       const fileName = metadata?.Language?.toLocaleLowerCase().replaceAll(/\ /g, '-') ?? 'translated';
       downloadFile(`${fileName}.xml`, xml, "text/xml;charset=utf-8");
@@ -139,6 +153,16 @@ export default function App() {
     }
   }, [categories, metadata, entries]);
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+    setActiveSection(newValue);
+    setPage(1); // Importante: Resetar paginação ao trocar de aba
+  };
+
+  // Filtragem para o grid atual
+  const currentSectionEntries = React.useMemo(() => {
+    return categories[activeSection] || [];
+  }, [categories, activeSection]);
+
   // ---- render ----
   return (
     <Container maxWidth={false} sx={{ py: 3 }}>
@@ -158,10 +182,10 @@ export default function App() {
         <Paper elevation={0} variant="outlined" sx={{ p: 2, display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
           <FileImporter onXml={onXml} onProgressJson={onProgressJson} />
           
-          <Box sx={{ flexGrow: 1 }} /> {/* Spacer */}
+          <Box sx={{ flexGrow: 1 }} />
 
           <Button variant="outlined" onClick={handleExportProgress} disabled={entries.length === 0}>
-            Salvar Progresso (JSON)
+            Salvar Progresso
           </Button>
           <Button variant="outlined" color="success" onClick={handleSaveAll} disabled={entries.length === 0}>
             Aceitar Todos (Editados)
@@ -174,7 +198,7 @@ export default function App() {
           </Button>
         </Paper>
 
-        {/* Metadata Editor (Conditional) */}
+        {/* Metadata Editor */}
         {metadata && (
           <MetadataCard
             metadata={metadata}
@@ -182,10 +206,10 @@ export default function App() {
           />
         )}
 
-        {/* Progress */}
+        {/* Global Progress */}
         <Box sx={{ mt: 1 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant="caption" fontWeight="bold">Progresso da Tradução</Typography>
+            <Typography variant="caption" fontWeight="bold">Progresso Total</Typography>
             <Typography variant="caption">{savedCount} / {total} ({percent}%)</Typography>
           </Box>
           <LinearProgress
@@ -201,7 +225,55 @@ export default function App() {
         </Box>
       </Box>
 
-      <CardsGrid entries={entries} page={page} onPageChange={setPage} onChange={handleChange} onAccept={handleAccept} />
+      {/* Section Tabs */}
+      {entries.length > 0 && (
+        <Paper variant="outlined" sx={{ mb: 2 }}>
+          <Tabs
+            value={activeSection}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            textColor="primary"
+            indicatorColor="primary"
+            aria-label="seções do arquivo"
+          >
+            {sections.map((sec) => {
+                const count = categories[sec]?.length ?? 0;
+                // Opcional: mostrar count editado/salvo por seção? Por enquanto só total.
+                return (
+                    <Tab 
+                        key={sec} 
+                        value={sec} 
+                        label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {sec}
+                                <Chip label={count} size="small" variant="filled" sx={{ height: 20, fontSize: '0.7rem' }} />
+                            </Box>
+                        } 
+                    />
+                );
+            })}
+          </Tabs>
+        </Paper>
+      )}
+
+      {/* Content Grid */}
+      {entries.length > 0 ? (
+          <CardsGrid 
+            entries={currentSectionEntries} 
+            page={page} 
+            onPageChange={setPage} 
+            onChange={handleChange} 
+            onAccept={handleAccept} 
+          />
+      ) : (
+          <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'action.hover' }}>
+              <Typography color="text.secondary">
+                  Carregue um arquivo XML para começar.
+              </Typography>
+          </Paper>
+      )}
     </Container>
   );
 }

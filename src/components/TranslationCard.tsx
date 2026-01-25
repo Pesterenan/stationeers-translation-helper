@@ -14,11 +14,12 @@ import type { Entry } from "../types";
 
 type Props = {
   entry: Entry;
+  index?: number; // Índice relativo à página atual (para navegação de foco)
   onChange: (key: string, value: string) => void;
   onAccept: (key: string) => void;
 };
 
-const TranslationCardInner: React.FC<Props> = ({ entry, onChange, onAccept }) => {
+const TranslationCardInner: React.FC<Props> = ({ entry, index, onChange, onAccept }) => {
   const theme = useTheme();
 
   // Use recordKey if available, otherwise fallback to parsing key or full key
@@ -61,14 +62,28 @@ const TranslationCardInner: React.FC<Props> = ({ entry, onChange, onAccept }) =>
     // Ctrl/Cmd + Enter to accept
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
       e.preventDefault();
+      
+      // 1. Aceitar a tradução atual
       handleAccept();
+      
+      // 2. Tentar focar no próximo campo
+      if (index !== undefined) {
+        // Pequeno timeout para garantir que o ciclo de renderização não atrapalhe (opcional, mas seguro)
+        setTimeout(() => {
+          const nextInputId = `translation-input-${index + 1}`;
+          const nextElement = document.getElementById(nextInputId);
+          if (nextElement) {
+            nextElement.focus();
+            // Opcional: Selecionar o texto ao focar facilita a edição rápida se já houver algo
+            // (nextElement as HTMLInputElement).select(); 
+          }
+        }, 0);
+      }
     }
   };
 
   const handleCopyOriginal = useCallback(() => {
     setTranslation(entry.original ?? "");
-    // don't immediately commit — user may edit; but could also commit if you prefer:
-    // onChange(entry.key, entry.original ?? "");
   }, [entry.original]);
 
   return (
@@ -117,6 +132,7 @@ const TranslationCardInner: React.FC<Props> = ({ entry, onChange, onAccept }) =>
         <Grid container alignItems="center" spacing={1} sx={{ mt: 1 }} onKeyDown={handleKeyDown}>
           <Grid size="grow">
             <TextField
+              id={index !== undefined ? `translation-input-${index}` : undefined}
               fullWidth
               multiline={shouldMultiline}
               minRows={shouldMultiline ? 3 : 1}

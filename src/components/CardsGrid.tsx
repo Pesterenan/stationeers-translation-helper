@@ -29,7 +29,7 @@ const CardsGrid: React.FC<Props> = ({
   return (
     <Box>
       <Grid container>
-        {slice.map((e) => (
+        {slice.map((e, idx) => (
           <Grid
             key={e.id}
             padding={1}
@@ -38,6 +38,7 @@ const CardsGrid: React.FC<Props> = ({
           >
             <TranslationCard
               entry={e}
+              index={idx}
               onChange={onChange}
               onAccept={onAccept}
             />
