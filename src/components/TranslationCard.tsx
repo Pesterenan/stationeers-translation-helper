@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useTheme, alpha } from "@mui/material/styles";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -19,8 +19,57 @@ type Props = {
   onAccept: (key: string) => void;
 };
 
+/**
+ * Componente interno para renderizar o texto original com tags clicáveis
+ */
+const OriginalTextDisplay: React.FC<{ text: string; onTagClick: (tag: string) => void }> = ({ text, onTagClick }) => {
+  if (!text) return null;
+
+  // Regex para capturar tags como {LINK:Page;Text}, {THING:Prefab}, etc.
+  // Usamos (?:...) para não criar um grupo de captura extra para o prefixo no split.
+  const parts = text.split(/(\{(?:[A-Z]+)[:_]+[^}]+\})/g);
+
+  return (
+    <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 0.5, lineHeight: 1.6 }}>
+      {parts.map((part, i) => {
+        if (part.startsWith("{") && part.endsWith("}")) {
+          return (
+            <Tooltip title="Clique para inserir na tradução" key={i}>
+              <Box
+                component="span"
+                onClick={() => onTagClick(part)}
+                sx={{
+                  cursor: "pointer",
+                  color: "primary.main",
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                  px: 0.5,
+                  mx: 0.2,
+                  borderRadius: 1,
+                  textDecoration: "underline",
+                  fontWeight: "bold",
+                  display: "inline-block",
+                  verticalAlign: "middle",
+                  "&:hover": {
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2),
+                    color: "primary.dark",
+                  },
+                }}
+              >
+                {part}
+              </Box>
+            </Tooltip>
+          );
+        }
+
+        return <span key={i}>{part}</span>;
+      })}
+    </Typography>
+  );
+};
+
 const TranslationCardInner: React.FC<Props> = ({ entry, index, onChange, onAccept }) => {
   const theme = useTheme();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Use recordKey if available, otherwise fallback to parsing key or full key
   const displayKey = entry.recordKey ?? entry.key;
@@ -86,6 +135,26 @@ const TranslationCardInner: React.FC<Props> = ({ entry, index, onChange, onAccep
     setTranslation(entry.original ?? "");
   }, [entry.original]);
 
+  const handleTagClick = useCallback((tag: string) => {
+    const input = inputRef.current;
+    if (input) {
+      const start = input.selectionStart ?? translation.length;
+      const end = input.selectionEnd ?? translation.length;
+      const newText = translation.substring(0, start) + tag + translation.substring(end);
+      
+      setTranslation(newText);
+      
+      // Re-focar e posicionar cursor após a tag inserida
+      setTimeout(() => {
+        input.focus();
+        const newPos = start + tag.length;
+        input.setSelectionRange(newPos, newPos);
+      }, 0);
+    } else {
+      setTranslation(prev => prev + tag);
+    }
+  }, [translation]);
+
   return (
     <Card variant="elevation" sx={{ backgroundColor, transition: "background-color 0.2s ease" }}>
       <CardContent>
@@ -124,15 +193,14 @@ const TranslationCardInner: React.FC<Props> = ({ entry, index, onChange, onAccep
           <Typography variant="caption" color="text.secondary">
             Original
           </Typography>
-          <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 0.5 }}>
-            {entry.original}
-          </Typography>
+          <OriginalTextDisplay text={entry.original ?? ""} onTagClick={handleTagClick} />
         </Box>
 
         <Grid container alignItems="center" spacing={1} sx={{ mt: 1 }} onKeyDown={handleKeyDown}>
           <Grid size="grow">
             <TextField
               id={index !== undefined ? `translation-input-${index}` : undefined}
+              inputRef={inputRef}
               fullWidth
               multiline={shouldMultiline}
               minRows={shouldMultiline ? 3 : 1}
