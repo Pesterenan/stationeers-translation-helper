@@ -1,26 +1,49 @@
 import React, { useEffect } from "react";
-import LinearProgress, { linearProgressClasses } from "@mui/material/LinearProgress";
+import LinearProgress, {
+  linearProgressClasses,
+} from "@mui/material/LinearProgress";
 import Typography from "@mui/material/Typography";
-import { Box, Button, useTheme, Container, Paper, Tabs, Tab, Chip } from "@mui/material";
+import {
+  Box,
+  Button,
+  useTheme,
+  Container,
+  Paper,
+  Tabs,
+  Tab,
+  Chip,
+  Backdrop,
+  CircularProgress,
+} from "@mui/material";
 
-import { parseStationeersXml, buildTranslatedStationeersXml, updateMetadataInXml } from "./lib/xmlParser";
+import {
+  parseStationeersXml,
+  buildTranslatedStationeersXml,
+  updateMetadataInXml,
+} from "./lib/xmlParser";
 import { downloadFile } from "./lib/fileHelpers";
 import { type Entry } from "./types";
-import { updateTranslation as updateTranslationHelper, acceptTranslation } from "./lib/entryHelpers";
+import {
+  updateTranslation as updateTranslationHelper,
+  acceptTranslation,
+} from "./lib/entryHelpers";
 
 import FileImporter from "./components/FileImporter";
 import CardsGrid from "./components/CardsGrid";
 
 import { exportFinalFilesAsZip } from "./lib/exportAllFiles";
-import MetadataCard from './components/MetadataCard';
+import MetadataCard from "./components/MetadataCard";
 
 export default function App() {
   const theme = useTheme();
 
   const [entries, setEntries] = React.useState<Entry[]>([]);
   const [xmlDoc, setXmlDoc] = React.useState<XMLDocument | null>(null);
-  const [metadata, setMetadata] = React.useState<Record<string, string | undefined> | undefined>(undefined);
-  
+  const [metadata, setMetadata] = React.useState<
+    Record<string, string | undefined> | undefined
+  >(undefined);
+  const [isLoading, setIsLoading] = React.useState(false);
+
   // Paginação agora é relativa à seção ativa
   const [page, setPage] = React.useState<number>(1);
   const [activeSection, setActiveSection] = React.useState<string>("");
@@ -33,13 +56,16 @@ export default function App() {
       acc[key].push(entry);
       return acc;
     }, {});
-    
+
     // Ordena as chaves alfabeticamente para as abas ficarem estáveis
     // Mas podemos forçar algumas (como 'HelpPage' ou 'GameTip') para o fim se quisermos.
     return grouped;
   }, [entries]);
 
-  const sections = React.useMemo(() => Object.keys(categories).sort(), [categories]);
+  const sections = React.useMemo(
+    () => Object.keys(categories).sort(),
+    [categories],
+  );
 
   // Se a seção ativa não existir mais (ex: novo arquivo carregado), reseta para a primeira
   useEffect(() => {
@@ -52,62 +78,83 @@ export default function App() {
   }, [sections, activeSection, categories]);
 
   // progresso global
-  const savedCount = React.useMemo(() => entries.filter((e) => e.status === "saved").length, [entries]);
+  const savedCount = React.useMemo(
+    () => entries.filter((e) => e.status === "saved").length,
+    [entries],
+  );
   const total = entries.length;
   const percent = total === 0 ? 0 : Math.round((savedCount / total) * 100);
 
   const onXml = React.useCallback((text: string) => {
-    try {
-      const { entries: parsedEntries, xmlDocument, metadata: meta } = parseStationeersXml(text);
+    setTimeout(() => {
+      try {
+        const {
+          entries: parsedEntries,
+          xmlDocument,
+          metadata: meta,
+        } = parseStationeersXml(text);
 
-      const initialized = parsedEntries.map((e) => ({
-        ...e,
-        savedTranslation: undefined,
-        status: "unchanged" as Entry["status"],
-      }));
+        const initialized = parsedEntries.map((e) => ({
+          ...e,
+          savedTranslation: undefined,
+          status: "unchanged" as Entry["status"],
+        }));
 
-      setEntries(initialized);
-      setXmlDoc(xmlDocument);
-      setMetadata(meta);
-      setPage(1);
-      // activeSection será setado pelo useEffect acima
-    } catch (err: any) {
-      console.error("Erro ao parsear XML:", err);
-      alert("Erro ao parsear XML: " + (err?.message ?? String(err)));
-    }
+        setEntries(initialized);
+        setXmlDoc(xmlDocument);
+        setMetadata(meta);
+        setPage(1);
+        // activeSection será setado pelo useEffect acima
+      } catch (err: any) {
+        console.error("Erro ao parsear XML:", err);
+        alert("Erro ao parsear XML: " + (err?.message ?? String(err)));
+      } finally {
+        setIsLoading(false);
+      }
+    }, 50);
   }, []);
 
   const onProgressJson = React.useCallback((jsonText: string) => {
-    try {
-      const obj = JSON.parse(jsonText);
-      const translations: Record<string, string> = obj.translations ?? obj;
-      setEntries((prev) =>
-        prev.map((e) => {
-          const saved = translations[e.key];
-          if (saved != null) {
-            return {
-              ...e,
-              savedTranslation: saved,
-              translation: saved,
-              status: saved ? "saved" : "unchanged",
-            };
-          }
-          return e;
-        }),
-      );
-    } catch (err: any) {
-      console.error("Erro ao importar progresso JSON:", err);
-      alert("Erro ao importar progresso JSON: " + (err?.message ?? String(err)));
-    }
+    setTimeout(() => {
+      try {
+        const obj = JSON.parse(jsonText);
+        const translations: Record<string, string> = obj.translations ?? obj;
+        setEntries((prev) =>
+          prev.map((e) => {
+            const saved = translations[e.key];
+            if (saved != null) {
+              return {
+                ...e,
+                savedTranslation: saved,
+                translation: saved,
+                status: saved ? "saved" : "unchanged",
+              };
+            }
+            return e;
+          }),
+        );
+      } catch (err: any) {
+        console.error("Erro ao importar progresso JSON:", err);
+        alert(
+          "Erro ao importar progresso JSON: " + (err?.message ?? String(err)),
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }, 50);
   }, []);
 
   // ---- actions ----
   const handleChange = React.useCallback((key: string, value: string) => {
-    setEntries((prev) => prev.map((e) => (e.key === key ? updateTranslationHelper(e, value) : e)));
+    setEntries((prev) =>
+      prev.map((e) => (e.key === key ? updateTranslationHelper(e, value) : e)),
+    );
   }, []);
 
   const handleAccept = React.useCallback((key: string) => {
-    setEntries((prev) => prev.map((e) => (e.key === key ? acceptTranslation(e) : e)));
+    setEntries((prev) =>
+      prev.map((e) => (e.key === key ? acceptTranslation(e) : e)),
+    );
   }, []);
 
   const handleExportProgress = React.useCallback(() => {
@@ -115,41 +162,60 @@ export default function App() {
       if (e.savedTranslation) acc[e.key] = e.savedTranslation;
       return acc;
     }, {});
-    downloadFile("progress.json", JSON.stringify({ translations }, null, 2), "application/json;charset=utf-8");
+    downloadFile(
+      "progress.json",
+      JSON.stringify({ translations }, null, 2),
+      "application/json;charset=utf-8",
+    );
   }, [entries]);
 
   const handleSaveAll = React.useCallback(() => {
-    setEntries((prev) => prev.map((e) => (e.status === "edited" ? acceptTranslation(e) : e)));
+    setEntries((prev) =>
+      prev.map((e) => (e.status === "edited" ? acceptTranslation(e) : e)),
+    );
   }, []);
 
   const handleDownloadTranslatedXml = React.useCallback(() => {
     if (!xmlDoc) return alert("Nenhum XML carregado");
-    try {
-      let docToUse = xmlDoc;
-      if (metadata) {
-         const updatedXmlStr = updateMetadataInXml(xmlDoc, metadata);
-         const { xmlDocument } = parseStationeersXml(updatedXmlStr);
-         docToUse = xmlDocument;
+    setIsLoading(true);
+    setTimeout(() => {
+      try {
+        let docToUse = xmlDoc;
+        if (metadata) {
+          const updatedXmlStr = updateMetadataInXml(xmlDoc, metadata);
+          const { xmlDocument } = parseStationeersXml(updatedXmlStr);
+          docToUse = xmlDocument;
+        }
+        const xml = buildTranslatedStationeersXml(docToUse, entries);
+        const fileName =
+          metadata?.Language?.toLocaleLowerCase().replaceAll(/ /g, "-") ??
+          "translated";
+        downloadFile(`${fileName}.xml`, xml, "text/xml;charset=utf-8");
+      } catch (err: any) {
+        console.error("Erro ao gerar XML traduzido:", err);
+        alert("Erro ao gerar XML traduzido: " + (err?.message ?? String(err)));
+      } finally {
+        setIsLoading(false);
       }
-      const xml = buildTranslatedStationeersXml(docToUse, entries);
-      const fileName = metadata?.Language?.toLocaleLowerCase().replaceAll(/\ /g, '-') ?? 'translated';
-      downloadFile(`${fileName}.xml`, xml, "text/xml;charset=utf-8");
-    } catch (err: any) {
-      console.error("Erro ao gerar XML traduzido:", err);
-      alert("Erro ao gerar XML traduzido: " + (err?.message ?? String(err)));
-    }
+    }, 50);
   }, [xmlDoc, entries, metadata]);
 
-  const handleExportFiles = React.useCallback(() => {
+  const handleExportFiles = React.useCallback(async () => {
     if (!entries || entries.length === 0) {
       alert("Nenhuma entrada carregada para exportar.");
       return;
     }
+    setIsLoading(true);
+    // exportFinalFilesAsZip is already async (returns Promise)
     try {
-      exportFinalFilesAsZip(metadata ?? {}, categories, { zipName: 'stationeers_translation' });
+      await exportFinalFilesAsZip(metadata ?? {}, categories, {
+        zipName: "stationeers_translation",
+      });
     } catch (err: any) {
       console.error("Erro ao exportar arquivos:", err);
       alert("Erro ao exportar arquivos: " + (err?.message ?? String(err)));
+    } finally {
+      setIsLoading(false);
     }
   }, [categories, metadata, entries]);
 
@@ -171,46 +237,80 @@ export default function App() {
           Stationeers Translation Helper
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Importe o arquivo XML original do jogo, edite as traduções e exporte para o formato correto.
+          Importe o arquivo XML original do jogo, edite as traduções e exporte
+          para o formato correto.
         </Typography>
       </Box>
 
       {/* Control Bar: Metadata + Actions */}
-      <Box sx={{ mb: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        
+      <Box sx={{ mb: 3, display: "flex", flexDirection: "column", gap: 2 }}>
         {/* Actions Toolbar */}
-        <Paper elevation={0} variant="outlined" sx={{ p: 2, display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
-          <FileImporter onXml={onXml} onProgressJson={onProgressJson} />
-          
+        <Paper
+          elevation={0}
+          variant="outlined"
+          sx={{
+            p: 2,
+            display: "flex",
+            gap: 1,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <FileImporter
+            onXml={onXml}
+            onProgressJson={onProgressJson}
+            onStart={() => setIsLoading(true)}
+          />
+
           <Box sx={{ flexGrow: 1 }} />
 
-          <Button variant="outlined" onClick={handleExportProgress} disabled={entries.length === 0}>
+          <Button
+            variant="outlined"
+            onClick={handleExportProgress}
+            disabled={entries.length === 0}
+          >
             Salvar Progresso
           </Button>
-          <Button variant="outlined" color="success" onClick={handleSaveAll} disabled={entries.length === 0}>
+          <Button
+            variant="outlined"
+            color="success"
+            onClick={handleSaveAll}
+            disabled={entries.length === 0}
+          >
             Aceitar Todos (Editados)
           </Button>
-          <Button variant="outlined" onClick={handleDownloadTranslatedXml} disabled={!xmlDoc}>
+          <Button
+            variant="outlined"
+            onClick={handleDownloadTranslatedXml}
+            disabled={!xmlDoc}
+          >
             Baixar XML Único
           </Button>
-          <Button variant="contained" onClick={handleExportFiles} disabled={entries.length === 0}>
+          <Button
+            variant="contained"
+            onClick={handleExportFiles}
+            disabled={entries.length === 0}
+          >
             Exportar ZIP (Final)
           </Button>
         </Paper>
 
         {/* Metadata Editor */}
         {metadata && (
-          <MetadataCard
-            metadata={metadata}
-            onUpdate={(m) => setMetadata(m)}
-          />
+          <MetadataCard metadata={metadata} onUpdate={(m) => setMetadata(m)} />
         )}
 
         {/* Global Progress */}
         <Box sx={{ mt: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant="caption" fontWeight="bold">Progresso Total</Typography>
-            <Typography variant="caption">{savedCount} / {total} ({percent}%)</Typography>
+          <Box
+            sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
+          >
+            <Typography variant="caption" fontWeight="bold">
+              Progresso Total
+            </Typography>
+            <Typography variant="caption">
+              {savedCount} / {total} ({percent}%)
+            </Typography>
           </Box>
           <LinearProgress
             variant="determinate"
@@ -239,20 +339,25 @@ export default function App() {
             aria-label="seções do arquivo"
           >
             {sections.map((sec) => {
-                const count = categories[sec]?.length ?? 0;
-                // Opcional: mostrar count editado/salvo por seção? Por enquanto só total.
-                return (
-                    <Tab 
-                        key={sec} 
-                        value={sec} 
-                        label={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                {sec}
-                                <Chip label={count} size="small" variant="filled" sx={{ height: 20, fontSize: '0.7rem' }} />
-                            </Box>
-                        } 
-                    />
-                );
+              const count = categories[sec]?.length ?? 0;
+              // Opcional: mostrar count editado/salvo por seção? Por enquanto só total.
+              return (
+                <Tab
+                  key={sec}
+                  value={sec}
+                  label={
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {sec}
+                      <Chip
+                        label={count}
+                        size="small"
+                        variant="filled"
+                        sx={{ height: 20, fontSize: "0.7rem" }}
+                      />
+                    </Box>
+                  }
+                />
+              );
             })}
           </Tabs>
         </Paper>
@@ -260,20 +365,27 @@ export default function App() {
 
       {/* Content Grid */}
       {entries.length > 0 ? (
-          <CardsGrid 
-            entries={currentSectionEntries} 
-            page={page} 
-            onPageChange={setPage} 
-            onChange={handleChange} 
-            onAccept={handleAccept} 
-          />
+        <CardsGrid
+          entries={currentSectionEntries}
+          page={page}
+          onPageChange={setPage}
+          onChange={handleChange}
+          onAccept={handleAccept}
+        />
       ) : (
-          <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'action.hover' }}>
-              <Typography color="text.secondary">
-                  Carregue um arquivo XML para começar.
-              </Typography>
-          </Paper>
+        <Paper sx={{ p: 4, textAlign: "center", bgcolor: "action.hover" }}>
+          <Typography color="text.secondary">
+            Carregue um arquivo XML para começar.
+          </Typography>
+        </Paper>
       )}
+
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </Container>
   );
 }

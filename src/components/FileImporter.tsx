@@ -5,12 +5,17 @@ import { readFileAsText } from "../lib/fileHelpers";
 type Props = {
   onXml: (fileText: string, fileName?: string) => void;
   onProgressJson: (jsonText: string) => void;
+  onStart?: () => void;
 };
 
-const FileImporter: React.FC<Props> = ({ onXml, onProgressJson }) => {
+const FileImporter: React.FC<Props> = ({ onXml, onProgressJson, onStart }) => {
   const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    onStart?.();
+    await new Promise(resolve => setTimeout(resolve, 50));
+
     const text = await readFileAsText(file);
     const name = file.name.toLowerCase();
     const isJson = name.endsWith('.json') || name.endsWith('.progress') || file.type === 'application/json';
