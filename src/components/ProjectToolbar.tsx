@@ -75,26 +75,28 @@ const ProjectToolbar: React.FC<Props> = ({
       </Paper>
 
       {/* Global Progress */}
-      <Grid marginInline={2}>
-        <Grid container justifyContent="space-between">
-          <Typography variant="caption" fontWeight="bold">
-            Progresso Total
-          </Typography>
-          <Typography variant="caption">
-            {savedCount} / {totalCount} ({percent}%)
-          </Typography>
+      {entriesCount > 0 && (
+        <Grid marginInline={2}>
+          <Grid container justifyContent="space-between">
+            <Typography variant="caption" fontWeight="bold">
+              Progresso Total
+            </Typography>
+            <Typography variant="caption">
+              {savedCount} / {totalCount} ({percent}%)
+            </Typography>
+          </Grid>
+          <LinearProgress
+            variant="determinate"
+            value={percent}
+            sx={{
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: theme.palette.grey[200],
+              [`& .${linearProgressClasses.bar}`]: { borderRadius: 5 },
+            }}
+          />
         </Grid>
-        <LinearProgress
-          variant="determinate"
-          value={percent}
-          sx={{
-            height: 10,
-            borderRadius: 5,
-            backgroundColor: theme.palette.grey[200],
-            [`& .${linearProgressClasses.bar}`]: { borderRadius: 5 },
-          }}
-        />
-      </Grid>
+      )}
     </Grid>
   );
 };
