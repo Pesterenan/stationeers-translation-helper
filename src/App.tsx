@@ -101,11 +101,15 @@ export default function App() {
           status: "unchanged" as Entry["status"],
         }));
 
+        // Encontra a primeira seção (alfabeticamente, para bater com o useMemo de sections)
+        const uniqueSections = Array.from(new Set(parsedEntries.map(e => e.section))).sort();
+        const firstSection = uniqueSections.length > 0 ? uniqueSections[0] : "";
+
         setEntries(initialized);
         setXmlDoc(xmlDocument);
         setMetadata(meta);
+        setActiveSection(firstSection);
         setPage(1);
-        // activeSection será setado pelo useEffect acima
       } catch (err: any) {
         console.error("Erro ao parsear XML:", err);
         alert("Erro ao parsear XML: " + (err?.message ?? String(err)));
@@ -119,10 +123,13 @@ export default function App() {
     setTimeout(() => {
       try {
         const obj = JSON.parse(jsonText);
-        const translations: Record<string, string> = obj.translations ?? obj;
+        const translations: Record<string, string> = obj.translations ?? {};
+
         setEntries((prev) =>
           prev.map((e) => {
-            const saved = translations[e.key];
+            const combinedKey = `${e.section}|${e.key}`;
+            const saved = translations[combinedKey];
+
             if (saved != null) {
               return {
                 ...e,
@@ -146,29 +153,42 @@ export default function App() {
   }, []);
 
   // ---- actions ----
-  const handleChange = React.useCallback((key: string, value: string) => {
+  const handleChange = React.useCallback((id: string, value: string) => {
     setEntries((prev) =>
-      prev.map((e) => (e.key === key ? updateTranslationHelper(e, value) : e)),
+      prev.map((e) => (e.id === id ? updateTranslationHelper(e, value) : e)),
     );
   }, []);
 
-  const handleAccept = React.useCallback((key: string) => {
+  const handleAccept = React.useCallback((id: string) => {
     setEntries((prev) =>
-      prev.map((e) => (e.key === key ? acceptTranslation(e) : e)),
+      prev.map((e) => (e.id === id ? acceptTranslation(e) : e)),
     );
   }, []);
 
   const handleExportProgress = React.useCallback(() => {
     const translations = entries.reduce<Record<string, string>>((acc, e) => {
-      if (e.savedTranslation) acc[e.key] = e.savedTranslation;
+      if (e.savedTranslation) {
+        // Usamos uma chave composta para evitar que traduções de seções diferentes colidam
+        const exportKey = `${e.section}|${e.key}`;
+        acc[exportKey] = e.savedTranslation;
+      }
       return acc;
     }, {});
+    console.log(translations, 'TRANSLATIONS');
+
+    const exportData = {
+      metadata,
+      timestamp: new Date().toISOString(),
+      translations,
+    };
+
+    const fileName = `${metadata?.Language?.toLowerCase().replace(/\s+/g, "-") || "stationeers"}-translation-progress.json`;
     downloadFile(
-      "progress.json",
-      JSON.stringify({ translations }, null, 2),
+      fileName,
+      JSON.stringify(exportData, null, 2),
       "application/json;charset=utf-8",
     );
-  }, [entries]);
+  }, [entries, metadata]);
 
   const handleSaveAll = React.useCallback(() => {
     setEntries((prev) =>
@@ -327,7 +347,7 @@ export default function App() {
       </Box>
 
       {/* Section Tabs */}
-      {entries.length > 0 && (
+      {entries.length > 0 && activeSection && (
         <Paper variant="outlined" sx={{ mb: 2 }}>
           <Tabs
             value={activeSection}
@@ -340,8 +360,12 @@ export default function App() {
             aria-label="seções do arquivo"
           >
             {sections.map((sec) => {
-              const count = categories[sec]?.length ?? 0;
-              const edited = categories[sec].reduce((acc, entry) => entry.status === "saved" ? acc + 1 : acc, 0);
+              const sectionEntries = categories[sec] ?? [];
+              const totalCount = sectionEntries.length;
+              const savedCount = sectionEntries.filter(
+                (e) => e.status === "saved",
+              ).length;
+
               return (
                 <Tab
                   key={sec}
@@ -350,9 +374,12 @@ export default function App() {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       {sec}
                       <Chip
-                        label={edited ? `${edited}/${count}` : count}
+                        label={`${savedCount} / ${totalCount}`}
                         size="small"
-                        variant="filled"
+                        color={
+                          savedCount === totalCount ? "success" : "default"
+                        }
+                        variant={savedCount > 0 ? "filled" : "outlined"}
                         sx={{ height: 20, fontSize: "0.7rem" }}
                       />
                     </Box>
@@ -385,7 +412,13 @@ export default function App() {
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
         open={isLoading}
       >
-        <Grid alignItems="center" container flexDirection="column" gap={2} justifyContent="center">
+        <Grid
+          alignItems="center"
+          container
+          flexDirection="column"
+          gap={2}
+          justifyContent="center"
+        >
           <Typography variant="h4">Carregando arquivo</Typography>
           <CircularProgress color="inherit" />
         </Grid>

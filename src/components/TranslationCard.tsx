@@ -15,8 +15,8 @@ import type { Entry } from "../types";
 type Props = {
   entry: Entry;
   index?: number; // Índice relativo à página atual (para navegação de foco)
-  onChange: (key: string, value: string) => void;
-  onAccept: (key: string) => void;
+  onChange: (id: string, value: string) => void;
+  onAccept: (id: string) => void;
 };
 
 /**
@@ -27,7 +27,7 @@ const OriginalTextDisplay: React.FC<{ text: string; onTagClick: (tag: string) =>
 
   // Regex para capturar tags como {LINK:Page;Text}, {THING:Prefab}, {LIST_OF_RESOURCES}, etc.
   // Suporta tags com ou sem dois pontos.
-  const parts = text.split(/(\{(?:[A-Z_]+)(?::[^\}]*)?\})/g);
+  const parts = text.split(/(\{(?:[A-Z_]+)(?::[^}]*)?\})/g);
 
   return (
     <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mt: 0.5, lineHeight: 1.6 }}>
@@ -98,14 +98,14 @@ const TranslationCardInner: React.FC<Props> = ({ entry, index, onChange, onAccep
   const commitChange = useCallback(() => {
     // only call onChange when value actually differs from entry.translation
     if ((entry.translation ?? "") !== translation) {
-      onChange(entry.key, translation);
+      onChange(entry.id, translation);
     }
-  }, [entry.key, entry.translation, translation, onChange]);
+  }, [entry.id, entry.translation, translation, onChange]);
 
   const handleAccept = useCallback(() => {
     commitChange();
-    onAccept(entry.key);
-  }, [commitChange, onAccept, entry.key]);
+    onAccept(entry.id);
+  }, [commitChange, onAccept, entry.id]);
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
     // Ctrl/Cmd + Enter to accept

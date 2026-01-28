@@ -10,8 +10,8 @@ type Props = {
   pageSize?: number;
   page: number;
   onPageChange: (newPage: number) => void;
-  onChange: (key: string, value: string) => void;
-  onAccept: (key: string) => void;
+  onChange: (id: string, value: string) => void;
+  onAccept: (id: string) => void;
 };
 
 const CardsGrid: React.FC<Props> = ({
