@@ -1,5 +1,13 @@
 import React from "react";
-import { Box, Button, Paper, Typography, LinearProgress, linearProgressClasses, useTheme } from "@mui/material";
+import {
+  Button,
+  Grid,
+  LinearProgress,
+  Paper,
+  Typography,
+  linearProgressClasses,
+  useTheme,
+} from "@mui/material";
 import FileImporter from "./FileImporter";
 
 type Props = {
@@ -9,7 +17,7 @@ type Props = {
   savedCount: number;
   totalCount: number;
   percent: number;
-  
+
   // Handlers
   onXml: (text: string, fileName?: string) => void;
   onProgressJson: (text: string) => void;
@@ -33,55 +41,49 @@ const ProjectToolbar: React.FC<Props> = ({
   const theme = useTheme();
 
   return (
-    <Box sx={{ mb: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+    <Grid container flexDirection="column" rowGap={1} paddingBlock={2}>
       {/* Actions Toolbar */}
-      <Paper
-        elevation={0}
-        variant="outlined"
-        sx={{
-          p: 2,
-          display: "flex",
-          gap: 1,
-          alignItems: "center",
-          flexWrap: "wrap",
-        }}
-      >
-        <FileImporter
-          onXml={onXml}
-          onProgressJson={onProgressJson}
-          onStart={onStartLoading}
-        />
-
-        <Box sx={{ flexGrow: 1 }} />
-
-        <Button
-          variant="outlined"
-          onClick={onExportProgress}
-          disabled={entriesCount === 0}
+      <Paper variant="outlined">
+        <Grid
+          container
+          gap={1}
+          justifyContent="space-between"
+          padding={2}
+          size="grow"
         >
-          Salvar Progresso
-        </Button>
-        <Button
-          variant="contained"
-          onClick={onDownloadXml}
-          disabled={!hasXml}
-        >
-          Baixar XML
-        </Button>
+          <FileImporter
+            onXml={onXml}
+            onProgressJson={onProgressJson}
+            onStart={onStartLoading}
+          />
+          <Grid size="grow" />
+          <Button
+            variant="outlined"
+            onClick={onExportProgress}
+            disabled={entriesCount === 0}
+          >
+            Salvar Progresso
+          </Button>
+          <Button
+            variant="contained"
+            onClick={onDownloadXml}
+            disabled={!hasXml}
+          >
+            Baixar XML
+          </Button>
+        </Grid>
       </Paper>
 
       {/* Global Progress */}
-      <Box sx={{ mt: 1 }}>
-        <Box
-          sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
-        >
+      <Grid marginInline={2}>
+        <Grid container justifyContent="space-between">
           <Typography variant="caption" fontWeight="bold">
             Progresso Total
           </Typography>
           <Typography variant="caption">
             {savedCount} / {totalCount} ({percent}%)
           </Typography>
-        </Box>
+        </Grid>
         <LinearProgress
           variant="determinate"
           value={percent}
@@ -92,8 +94,8 @@ const ProjectToolbar: React.FC<Props> = ({
             [`& .${linearProgressClasses.bar}`]: { borderRadius: 5 },
           }}
         />
-      </Box>
-    </Box>
+      </Grid>
+    </Grid>
   );
 };
 

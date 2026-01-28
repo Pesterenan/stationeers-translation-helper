@@ -28,6 +28,14 @@ const CardsGrid: React.FC<Props> = ({
 
   return (
     <Box>
+      <Grid container justifyContent="center">
+        <Pagination
+          count={totalPages}
+          page={page}
+          onChange={(_, p) => onPageChange(p)}
+        />
+      </Grid>
+
       <Grid container>
         {slice.map((e, idx) => (
           <Grid
@@ -46,13 +54,13 @@ const CardsGrid: React.FC<Props> = ({
         ))}
       </Grid>
 
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+      <Grid container justifyContent="center">
         <Pagination
           count={totalPages}
           page={page}
           onChange={(_, p) => onPageChange(p)}
         />
-      </Box>
+      </Grid>
     </Box>
   );
 };

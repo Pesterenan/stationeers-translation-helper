@@ -47,19 +47,19 @@ export default function App() {
 
   // ---- render ----
   return (
-    <Container maxWidth={false} sx={{ py: 3 }}>
-      <Box sx={{ mb: 3 }}>
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Grid alignItems="center" container flexDirection="column" sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
           Stationeers Translation Helper
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Importe o arquivo XML original do jogo, edite as traduções e exporte
-          para o formato correto.
+          Importe o arquivo XML original do jogo, edite as traduções e exporte o
+          novo XML
         </Typography>
-      </Box>
+      </Grid>
 
       {/* Control Bar: Metadata + Actions */}
-      <ProjectToolbar 
+      <ProjectToolbar
         entriesCount={entries.length}
         hasXml={!!xmlDoc}
         savedCount={savedCount}
@@ -78,7 +78,7 @@ export default function App() {
       )}
 
       {/* Section Tabs */}
-      <SectionTabs 
+      <SectionTabs
         sections={sections}
         activeSection={activeSection}
         categories={categories}
@@ -86,7 +86,7 @@ export default function App() {
       />
 
       {/* Content Grid */}
-      {entries.length > 0 ? (
+      {entries.length > 0 && (
         <CardsGrid
           entries={currentSectionEntries}
           page={page}
@@ -94,12 +94,6 @@ export default function App() {
           onChange={updateEntry}
           onAccept={acceptEntry}
         />
-      ) : (
-        <Paper sx={{ p: 4, textAlign: "center", bgcolor: "action.hover" }}>
-          <Typography color="text.secondary">
-            Carregue um arquivo XML para começar.
-          </Typography>
-        </Paper>
       )}
 
       <Backdrop
