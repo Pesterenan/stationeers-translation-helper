@@ -26,6 +26,8 @@ export default function App() {
     savedCount,
     total,
     percent,
+    searchTerm,
+    setSearchTerm,
     setMetadata,
     setPage,
     loadXml,
@@ -63,6 +65,8 @@ export default function App() {
         savedCount={savedCount}
         totalCount={total}
         percent={percent}
+        searchTerm={searchTerm}
+        onSetSearchTerm={(st) => setSearchTerm(st)}
         onXml={loadXml}
         onProgressJson={loadProgressJson}
         onStartLoading={() => {}} // Loading handled inside hooks mostly, but exposed if needed

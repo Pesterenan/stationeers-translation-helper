@@ -17,22 +17,47 @@ export function useTranslationProject() {
   const [metadata, setMetadata] = useState<IMetadata | undefined>(undefined);
   const [originalFileName, setOriginalFileName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Pagination & Navigation
   const [page, setPage] = useState<number>(1);
   const [activeSection, setActiveSection] = useState<string>("");
 
-  // Group entries by section
-  const categories = useMemo(() => {
-    const grouped = entries.reduce<Record<string, Entry[]>>((acc, entry) => {
+  // Group entries by section (Memoized: only re-runs when entries change)
+  const groupedEntries = useMemo(() => {
+    return entries.reduce<Record<string, Entry[]>>((acc, entry) => {
       const key = entry.section;
       if (!acc[key]) acc[key] = [];
       acc[key].push(entry);
       return acc;
     }, {});
-    return grouped;
   }, [entries]);
+
+  // Filter categories based on search term (Memoized: runs when searchTerm or groupedEntries change)
+  const categories = useMemo(() => {
+    if (!searchTerm || searchTerm.length <= 2) {
+      return groupedEntries;
+    }
+
+    const lowerTerm = searchTerm.toLowerCase();
+    const result: Record<string, Entry[]> = {};
+
+    Object.entries(groupedEntries).forEach(([section, sectionEntries]) => {
+      const matches = sectionEntries.filter((entry) => {
+        const matchKey = entry.key.toLowerCase().includes(lowerTerm);
+        const matchOriginal = entry.original.toLowerCase().includes(lowerTerm);
+        const matchTranslation = entry.savedTranslation?.toLowerCase().includes(lowerTerm);
+        
+        return matchKey || matchOriginal || matchTranslation;
+      });
+
+      if (matches.length > 0) {
+        result[section] = matches;
+      }
+    });
+
+    return result;
+  }, [groupedEntries, searchTerm]);
 
   const sections = useMemo(() => Object.keys(categories).sort(), [categories]);
 
@@ -49,7 +74,7 @@ export function useTranslationProject() {
   // Statistics
   const savedCount = useMemo(
     () => entries.filter((e) => e.status === "saved").length,
-    [entries]
+    [entries],
   );
   const total = entries.length;
   const percent = total === 0 ? 0 : Math.round((savedCount / total) * 100);
@@ -72,10 +97,9 @@ export function useTranslationProject() {
         }));
 
         const uniqueSections = Array.from(
-          new Set(parsedEntries.map((e) => e.section))
+          new Set(parsedEntries.map((e) => e.section)),
         ).sort();
-        const firstSection =
-          uniqueSections.length > 0 ? uniqueSections[0] : "";
+        const firstSection = uniqueSections.length > 0 ? uniqueSections[0] : "";
 
         setEntries(initialized);
         setXmlDoc(xmlDocument);
@@ -113,12 +137,12 @@ export function useTranslationProject() {
               };
             }
             return e;
-          })
+          }),
         );
       } catch (err: any) {
         console.error("Erro ao importar progresso JSON:", err);
         alert(
-          "Erro ao importar progresso JSON: " + (err?.message ?? String(err))
+          "Erro ao importar progresso JSON: " + (err?.message ?? String(err)),
         );
       } finally {
         setIsLoading(false);
@@ -128,13 +152,13 @@ export function useTranslationProject() {
 
   const updateEntry = useCallback((id: string, value: string) => {
     setEntries((prev) =>
-      prev.map((e) => (e.id === id ? updateTranslationHelper(e, value) : e))
+      prev.map((e) => (e.id === id ? updateTranslationHelper(e, value) : e)),
     );
   }, []);
 
   const acceptEntry = useCallback((id: string) => {
     setEntries((prev) =>
-      prev.map((e) => (e.id === id ? acceptTranslation(e) : e))
+      prev.map((e) => (e.id === id ? acceptTranslation(e) : e)),
     );
   }, []);
 
@@ -155,23 +179,23 @@ export function useTranslationProject() {
 
     let fileName = "translation-progress.json";
     if (originalFileName) {
-        const parts = originalFileName.split('.');
-        if (parts.length > 1) {
-            const ext = parts.pop(); // remove extension
-            fileName = `${parts.join('.')}_progress.json`;
-        } else {
-            fileName = `${originalFileName}_progress.json`;
-        }
+      const parts = originalFileName.split(".");
+      if (parts.length > 1) {
+        const ext = parts.pop(); // remove extension
+        fileName = `${parts.join(".")}_progress.json`;
+      } else {
+        fileName = `${originalFileName}_progress.json`;
+      }
     } else {
-        fileName = `${
-            metadata?.Language?.toLowerCase().replace(/\s+/g, "-") || "stationeers"
-          }-translation-progress.json`;
+      fileName = `${
+        metadata?.Language?.toLowerCase().replace(/\s+/g, "-") || "stationeers"
+      }-translation-progress.json`;
     }
 
     downloadFile(
       fileName,
       JSON.stringify(exportData, null, 2),
-      "application/json;charset=utf-8"
+      "application/json;charset=utf-8",
     );
   }, [entries, metadata, originalFileName]);
 
@@ -187,21 +211,24 @@ export function useTranslationProject() {
           docToUse = xmlDocument;
         }
         const xml = buildTranslatedStationeersXml(docToUse, entries);
-        
+
         let fileName = "translated.xml";
         if (originalFileName) {
-           // Insert _translated before extension
-           const parts = originalFileName.split('.');
-           if (parts.length > 1) {
-             const ext = parts.pop();
-             fileName = `${parts.join('.')}_translated.${ext}`;
-           } else {
-             fileName = `${originalFileName}_translated.xml`;
-           }
+          // Insert _translated before extension
+          const parts = originalFileName.split(".");
+          if (parts.length > 1) {
+            const ext = parts.pop();
+            fileName = `${parts.join(".")}_translated.${ext}`;
+          } else {
+            fileName = `${originalFileName}_translated.xml`;
+          }
         } else {
-           // Fallback to Language Name if no original filename
-           const langName = metadata?.Language?.toLocaleLowerCase().replaceAll(/ /g, "-");
-           if (langName) fileName = `${langName}.xml`;
+          // Fallback to Language Name if no original filename
+          const langName = metadata?.Language?.toLocaleLowerCase().replaceAll(
+            / /g,
+            "-",
+          );
+          if (langName) fileName = `${langName}.xml`;
         }
 
         downloadFile(fileName, xml, "text/xml;charset=utf-8");
@@ -230,7 +257,7 @@ export function useTranslationProject() {
     searchTerm,
     sections,
     xmlDoc,
-    
+
     // Stats
     percent,
     savedCount,
@@ -240,7 +267,7 @@ export function useTranslationProject() {
     setMetadata,
     setPage,
     setSearchTerm,
-    
+
     // Actions
     acceptEntry,
     changeTab,

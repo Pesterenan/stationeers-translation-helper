@@ -2,13 +2,19 @@ import React from "react";
 import {
   Button,
   Grid,
+  InputAdornment,
   LinearProgress,
   Paper,
+  TextField,
+  Tooltip,
   Typography,
   linearProgressClasses,
   useTheme,
 } from "@mui/material";
 import FileImporter from "./FileImporter";
+import MetadataCard from "./MetadataCard";
+import type { IMetadata } from "../types";
+import { Search } from "@mui/icons-material";
 
 type Props = {
   // Data
@@ -17,6 +23,7 @@ type Props = {
   metadata?: IMetadata;
   percent: number;
   savedCount: number;
+  searchTerm: string;
   totalCount: number;
 
   // Handlers
@@ -24,6 +31,7 @@ type Props = {
   onExportProgress: () => void;
   onProgressJson: (text: string) => void;
   onSetMetadata: (metadata: IMetadata) => void;
+  onSetSearchTerm: (search: string) => void;
   onStartLoading: () => void;
   onXml: (text: string, fileName?: string) => void;
 };
@@ -34,15 +42,33 @@ const ProjectToolbar: React.FC<Props> = ({
   metadata,
   percent,
   savedCount,
+  searchTerm,
   totalCount,
   onDownloadXml,
   onExportProgress,
   onProgressJson,
   onSetMetadata,
+  onSetSearchTerm,
   onStartLoading,
   onXml,
 }) => {
   const theme = useTheme();
+  const [searchText, setSearchText] = React.useState(searchTerm || '');
+  
+  React.useEffect(() => {
+    // Se o texto for curto, atualizamos imediatamente para "resetar" a busca sem lag
+    if (searchText.length <= 2) {
+      onSetSearchTerm(searchText);
+      return;
+    }
+
+    // Para textos longos (pesquisa ativa), usamos o debounce para performance
+    const delayDebounceFn = setTimeout(() => {
+      onSetSearchTerm(searchText);
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchText, onSetSearchTerm]);
 
   return (
     <Grid container flexDirection="column" rowGap={1} paddingBlock={2}>
@@ -114,7 +140,26 @@ const ProjectToolbar: React.FC<Props> = ({
             />
           </Grid>
           <Grid container alignItems="center" gap={2}>
-            <InputLabel id="search-label">Pesquisar</InputLabel>
+            <TextField
+              id="search"
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Digite mais que 3 letras do que está procurando para pesquisar">
+                        <Search />
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                  placeholder: "Pesquisar",
+                  size: "small",
+                  sx: { borderRadius: "100px" },
+                },
+              }}
+              onChange={(event) => setSearchText(event.currentTarget.value)}
+              value={searchText}
+              variant="outlined"
+            />
           </Grid>
         </Grid>
       )}
