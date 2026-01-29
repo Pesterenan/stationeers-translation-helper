@@ -113,7 +113,7 @@ export function useTranslationProject() {
       } finally {
         setIsLoading(false);
       }
-    }, 50);
+    }, 600);
   }, []);
 
   const loadProgressJson = useCallback((jsonText: string) => {
@@ -147,7 +147,7 @@ export function useTranslationProject() {
       } finally {
         setIsLoading(false);
       }
-    }, 50);
+    }, 600);
   }, []);
 
   const updateEntry = useCallback((id: string, value: string) => {
@@ -238,7 +238,7 @@ export function useTranslationProject() {
       } finally {
         setIsLoading(false);
       }
-    }, 50);
+    }, 600);
   }, [xmlDoc, metadata, entries, originalFileName]);
 
   const changeTab = useCallback((newValue: string) => {
