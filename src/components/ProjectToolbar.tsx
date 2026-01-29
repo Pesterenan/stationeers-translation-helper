@@ -71,7 +71,7 @@ const ProjectToolbar: React.FC<Props> = ({
   }, [searchText, onSetSearchTerm]);
 
   return (
-    <Grid container flexDirection="column" rowGap={1} paddingBlock={2}>
+    <Grid container flexDirection="column" rowGap={1} paddingBlock={2} width="100%">
       {/* Actions Toolbar */}
       <Paper variant="outlined">
         <Grid
