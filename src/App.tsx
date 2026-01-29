@@ -1,16 +1,13 @@
 import React from "react";
 import Typography from "@mui/material/Typography";
 import {
-  Box,
   Container,
-  Paper,
   Backdrop,
   CircularProgress,
   Grid,
 } from "@mui/material";
 
 import CardsGrid from "./components/CardsGrid";
-import MetadataCard from "./components/MetadataCard";
 import ProjectToolbar from "./components/ProjectToolbar";
 import SectionTabs from "./components/SectionTabs";
 
@@ -62,6 +59,7 @@ export default function App() {
       <ProjectToolbar
         entriesCount={entries.length}
         hasXml={!!xmlDoc}
+        metadata={metadata}
         savedCount={savedCount}
         totalCount={total}
         percent={percent}
@@ -70,12 +68,8 @@ export default function App() {
         onStartLoading={() => {}} // Loading handled inside hooks mostly, but exposed if needed
         onExportProgress={exportProgressJson}
         onDownloadXml={downloadTranslatedXml}
+        onSetMetadata={(m) => setMetadata(m)}
       />
-
-      {/* Metadata Editor */}
-      {metadata && (
-        <MetadataCard metadata={metadata} onUpdate={(m) => setMetadata(m)} />
-      )}
 
       {/* Section Tabs */}
       <SectionTabs

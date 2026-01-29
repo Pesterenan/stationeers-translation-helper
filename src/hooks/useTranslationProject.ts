@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { type Entry } from "../types";
+import { type Entry, type IMetadata } from "../types";
 import {
   parseStationeersXml,
   buildTranslatedStationeersXml,
@@ -14,11 +14,10 @@ import {
 export function useTranslationProject() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [xmlDoc, setXmlDoc] = useState<XMLDocument | null>(null);
-  const [metadata, setMetadata] = useState<
-    Record<string, string | undefined> | undefined
-  >(undefined);
+  const [metadata, setMetadata] = useState<IMetadata | undefined>(undefined);
   const [originalFileName, setOriginalFileName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Pagination & Navigation
   const [page, setPage] = useState<number>(1);
@@ -84,7 +83,7 @@ export function useTranslationProject() {
         setOriginalFileName(fileName || "");
         setActiveSection(firstSection);
         setPage(1);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Erro ao parsear XML:", err);
         alert("Erro ao parsear XML: " + (err?.message ?? String(err)));
       } finally {
@@ -213,7 +212,7 @@ export function useTranslationProject() {
         setIsLoading(false);
       }
     }, 50);
-  }, [xmlDoc, entries, metadata]);
+  }, [xmlDoc, metadata, entries, originalFileName]);
 
   const changeTab = useCallback((newValue: string) => {
     setActiveSection(newValue);
@@ -222,31 +221,33 @@ export function useTranslationProject() {
 
   return {
     // State
-    entries,
-    xmlDoc,
-    metadata,
-    isLoading,
-    page,
     activeSection,
     categories,
+    entries,
+    isLoading,
+    metadata,
+    page,
+    searchTerm,
     sections,
+    xmlDoc,
     
     // Stats
+    percent,
     savedCount,
     total,
-    percent,
 
     // Setters (if needed directly)
     setMetadata,
     setPage,
+    setSearchTerm,
     
     // Actions
-    loadXml,
-    loadProgressJson,
-    updateEntry,
     acceptEntry,
-    exportProgressJson,
-    downloadTranslatedXml,
     changeTab,
+    downloadTranslatedXml,
+    exportProgressJson,
+    loadProgressJson,
+    loadXml,
+    updateEntry,
   };
 }

@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from "react";
-import Box from "@mui/material/Box";
+import React, { useState } from "react";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import InputAdornment from "@mui/material/InputAdornment";
-import Paper from "@mui/material/Paper";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
+import { Divider, Grid } from "@mui/material";
 
 type Props = {
   metadata: { Language?: string; Code?: string; Font?: string } | undefined;
@@ -24,11 +23,11 @@ const FONT_OPTIONS = [
 ];
 
 const MetadataCard: React.FC<Props> = ({ metadata, onUpdate }) => {
-  const [local, setLocal] = useState<{ Language?: string; Code?: string; Font?: string }>(metadata ?? {});
-
-  useEffect(() => {
-    setLocal(metadata ?? {});
-  }, [metadata]);
+  const [local, setLocal] = useState<{
+    Language?: string;
+    Code?: string;
+    Font?: string;
+  }>(metadata ?? {});
 
   const handleChange = (field: keyof typeof local, value: string) => {
     const next = { ...local, [field]: value };
@@ -52,24 +51,16 @@ const MetadataCard: React.FC<Props> = ({ metadata, onUpdate }) => {
   if (!metadata) return null;
 
   return (
-    <Paper
-      elevation={0}
-      variant="outlined"
-      sx={{
-        p: 2,
-        mb: 2,
-        display: "flex",
-        flexWrap: "wrap",
-        gap: 2,
-        alignItems: "center",
-        bgcolor: "background.default",
-      }}
+    <Grid
+      alignItems="center"
+      container
+      justifyContent="space-evenly"
+      size="grow"
     >
-      <Box sx={{ display: "flex", alignItems: "center", mr: 2 }}>
-        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary">
-          CONFIGURAÇÃO DO IDIOMA
-        </Typography>
-      </Box>
+      <Divider flexItem orientation="vertical" variant="fullWidth" />
+      <Typography variant="subtitle2" fontWeight="bold" color="text.secondary">
+        CONFIGURAÇÃO DO IDIOMA
+      </Typography>
 
       <TextField
         label="Nome (Language)"
@@ -79,7 +70,7 @@ const MetadataCard: React.FC<Props> = ({ metadata, onUpdate }) => {
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="Ex: Português"
-        sx={{ width: 200 }}
+        sx={{ width: 150 }}
       />
 
       <TextField
@@ -103,9 +94,13 @@ const MetadataCard: React.FC<Props> = ({ metadata, onUpdate }) => {
           onBlur={handleBlur}
           endAdornment={
             <InputAdornment position="end" sx={{ mr: 2 }}>
-               <Tooltip title="Define o conjunto de caracteres suportado. Use 'font_extended' para Português se notar caracteres faltando.">
-                  <InfoOutlinedIcon fontSize="small" color="action" style={{ cursor: 'help' }} />
-                </Tooltip>
+              <Tooltip title="Define o conjunto de caracteres suportado. Use 'font_extended' para Português se notar caracteres faltando.">
+                <InfoOutlinedIcon
+                  fontSize="small"
+                  color="action"
+                  style={{ cursor: "help" }}
+                />
+              </Tooltip>
             </InputAdornment>
           }
         >
@@ -116,11 +111,8 @@ const MetadataCard: React.FC<Props> = ({ metadata, onUpdate }) => {
           ))}
         </Select>
       </FormControl>
-
-      <Typography variant="caption" color="text.secondary" sx={{ ml: "auto" }}>
-        Dica: Use <b>font_extended</b> para garantir suporte a acentos (á, é, õ, ç).
-      </Typography>
-    </Paper>
+      <Divider flexItem orientation="vertical" variant="fullWidth" />
+    </Grid>
   );
 };
 

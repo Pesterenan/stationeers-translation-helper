@@ -14,29 +14,33 @@ type Props = {
   // Data
   entriesCount: number;
   hasXml: boolean;
+  metadata?: IMetadata;
+  percent: number;
   savedCount: number;
   totalCount: number;
-  percent: number;
 
   // Handlers
-  onXml: (text: string, fileName?: string) => void;
-  onProgressJson: (text: string) => void;
-  onStartLoading: () => void;
-  onExportProgress: () => void;
   onDownloadXml: () => void;
+  onExportProgress: () => void;
+  onProgressJson: (text: string) => void;
+  onSetMetadata: (metadata: IMetadata) => void;
+  onStartLoading: () => void;
+  onXml: (text: string, fileName?: string) => void;
 };
 
 const ProjectToolbar: React.FC<Props> = ({
   entriesCount,
   hasXml,
+  metadata,
+  percent,
   savedCount,
   totalCount,
-  percent,
-  onXml,
-  onProgressJson,
-  onStartLoading,
-  onExportProgress,
   onDownloadXml,
+  onExportProgress,
+  onProgressJson,
+  onSetMetadata,
+  onStartLoading,
+  onXml,
 }) => {
   const theme = useTheme();
 
@@ -56,7 +60,13 @@ const ProjectToolbar: React.FC<Props> = ({
             onProgressJson={onProgressJson}
             onStart={onStartLoading}
           />
-          <Grid size="grow" />
+          {/* Metadata Editor */}
+          {metadata ? (
+            <MetadataCard metadata={metadata} onUpdate={onSetMetadata} />
+          ) : (
+            <Grid size="grow" />
+          )}
+
           <Button
             variant="outlined"
             onClick={onExportProgress}
@@ -76,25 +86,36 @@ const ProjectToolbar: React.FC<Props> = ({
 
       {/* Global Progress */}
       {entriesCount > 0 && (
-        <Grid marginInline={2}>
-          <Grid container justifyContent="space-between">
-            <Typography variant="caption" fontWeight="bold">
-              Progresso Total
-            </Typography>
-            <Typography variant="caption">
-              {savedCount} / {totalCount} ({percent}%)
-            </Typography>
+        <Grid
+          container
+          flexDirection="row"
+          flexWrap="nowrap"
+          columnGap={8}
+          marginInline={2}
+        >
+          <Grid container flexDirection="column" size="grow">
+            <Grid container flexDirection="row" justifyContent="space-between">
+              <Typography variant="caption" fontWeight="bold">
+                Progresso Total
+              </Typography>
+              <Typography variant="caption">
+                {savedCount} / {totalCount} ({percent}%)
+              </Typography>
+            </Grid>
+            <LinearProgress
+              variant="determinate"
+              value={percent}
+              sx={{
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: theme.palette.grey[200],
+                [`& .${linearProgressClasses.bar}`]: { borderRadius: 5 },
+              }}
+            />
           </Grid>
-          <LinearProgress
-            variant="determinate"
-            value={percent}
-            sx={{
-              height: 10,
-              borderRadius: 5,
-              backgroundColor: theme.palette.grey[200],
-              [`& .${linearProgressClasses.bar}`]: { borderRadius: 5 },
-            }}
-          />
+          <Grid container alignItems="center" gap={2}>
+            <InputLabel id="search-label">Pesquisar</InputLabel>
+          </Grid>
         </Grid>
       )}
     </Grid>
