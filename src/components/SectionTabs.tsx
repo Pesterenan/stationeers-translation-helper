@@ -1,27 +1,18 @@
 import React from "react";
 import { Paper, Tabs, Tab, Box, Chip } from "@mui/material";
-import { type Entry } from "../types";
+import { useTranslationContext } from "../context/TranslationContext";
 
-type Props = {
-  sections: string[];
-  activeSection: string;
-  categories: Record<string, Entry[]>;
-  onChange: (newValue: string) => void;
-};
+const SectionTabs: React.FC = () => {
+  const { activeSection, categories, sections, changeTab } =
+    useTranslationContext();
 
-const SectionTabs: React.FC<Props> = ({
-  sections,
-  activeSection,
-  categories,
-  onChange,
-}) => {
   if (sections.length === 0) return null;
 
   return (
     <Paper variant="outlined" sx={{ mb: 2 }}>
       <Tabs
         value={activeSection || false}
-        onChange={(_, newValue) => onChange(newValue)}
+        onChange={(_, newValue) => changeTab(newValue)}
         variant="scrollable"
         scrollButtons="auto"
         allowScrollButtonsMobile
@@ -33,7 +24,7 @@ const SectionTabs: React.FC<Props> = ({
           const sectionEntries = categories[sec] ?? [];
           const totalCount = sectionEntries.length;
           const savedCount = sectionEntries.filter(
-            (e) => e.status === "saved"
+            (e) => e.status === "saved",
           ).length;
 
           return (

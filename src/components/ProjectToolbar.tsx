@@ -13,65 +13,55 @@ import {
 } from "@mui/material";
 import FileImporter from "./FileImporter";
 import MetadataCard from "./MetadataCard";
-import type { IMetadata } from "../types";
 import { Search } from "@mui/icons-material";
+import { useTranslationContext } from "../context/TranslationContext";
 
-type Props = {
-  // Data
-  entriesCount: number;
-  hasXml: boolean;
-  metadata?: IMetadata;
-  percent: number;
-  savedCount: number;
-  searchTerm: string;
-  totalCount: number;
+const ProjectToolbar: React.FC = () => {
+  const {
+    entries,
+    xmlDoc,
+    metadata,
+    percent,
+    savedCount,
+    searchTerm,
+    total,
+    downloadTranslatedXml,
+    exportProgressJson,
+    loadProgressJson,
+    setMetadata,
+    setSearchTerm,
+    loadXml,
+  } = useTranslationContext();
 
-  // Handlers
-  onDownloadXml: () => void;
-  onExportProgress: () => void;
-  onProgressJson: (text: string) => void;
-  onSetMetadata: (metadata: IMetadata) => void;
-  onSetSearchTerm: (search: string) => void;
-  onStartLoading: () => void;
-  onXml: (text: string, fileName?: string) => void;
-};
-
-const ProjectToolbar: React.FC<Props> = ({
-  entriesCount,
-  hasXml,
-  metadata,
-  percent,
-  savedCount,
-  searchTerm,
-  totalCount,
-  onDownloadXml,
-  onExportProgress,
-  onProgressJson,
-  onSetMetadata,
-  onSetSearchTerm,
-  onStartLoading,
-  onXml,
-}) => {
   const theme = useTheme();
-  const [searchText, setSearchText] = React.useState(searchTerm || '');
-  
+  const [searchText, setSearchText] = React.useState(searchTerm || "");
+
+  const hasXml = !!xmlDoc;
+  const entriesCount = entries.length;
+
   React.useEffect(() => {
     // Se o texto for curto, atualizamos imediatamente para "resetar" a busca sem lag
     if (searchText.length <= 2) {
-      onSetSearchTerm(searchText);
+      setSearchTerm(searchText);
       return;
     }
 
     // Para textos longos (pesquisa ativa), usamos o debounce para performance
     const delayDebounceFn = setTimeout(() => {
-      onSetSearchTerm(searchText);
+      setSearchTerm(searchText);
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchText, onSetSearchTerm]);
+  }, [searchText, setSearchTerm]);
 
   return (
-    <Grid container flexDirection="column" rowGap={1} paddingBlock={2} width="100%">
+    <Grid
+      container
+      flexDirection="column"
+      rowGap={1}
+      paddingBlock={2}
+      width="100%"
+    >
       {/* Actions Toolbar */}
       <Paper variant="outlined">
         <Grid
@@ -82,27 +72,27 @@ const ProjectToolbar: React.FC<Props> = ({
           size="grow"
         >
           <FileImporter
-            onXml={onXml}
-            onProgressJson={onProgressJson}
-            onStart={onStartLoading}
+            onXml={loadXml}
+            onProgressJson={loadProgressJson}
+            onStart={() => {}} // Loading agora é gerenciado pelo Contexto
           />
           {/* Metadata Editor */}
           {metadata ? (
-            <MetadataCard metadata={metadata} onUpdate={onSetMetadata} />
+            <MetadataCard metadata={metadata} onUpdate={setMetadata} />
           ) : (
             <Grid size="grow" />
           )}
 
           <Button
             variant="outlined"
-            onClick={onExportProgress}
+            onClick={exportProgressJson}
             disabled={entriesCount === 0}
           >
             Salvar Progresso
           </Button>
           <Button
             variant="contained"
-            onClick={onDownloadXml}
+            onClick={downloadTranslatedXml}
             disabled={!hasXml}
           >
             Baixar XML
@@ -125,7 +115,7 @@ const ProjectToolbar: React.FC<Props> = ({
                 Progresso Total
               </Typography>
               <Typography variant="caption">
-                {savedCount} / {totalCount} ({percent}%)
+                {savedCount} / {total} ({percent}%)
               </Typography>
             </Grid>
             <LinearProgress

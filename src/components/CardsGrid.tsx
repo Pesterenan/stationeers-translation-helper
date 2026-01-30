@@ -1,28 +1,20 @@
-import React from "react";
-import Pagination from "@mui/material/Pagination";
-import Box from "@mui/material/Box";
+import React, { useMemo } from "react";
 import Grid from "@mui/material/Grid";
 import TranslationCard from "./TranslationCard";
-import { type Entry } from "../types";
+import { useTranslationContext } from "../context/TranslationContext";
 
-type Props = {
-  entries: Entry[];
-  pageSize?: number;
-  page: number;
-  onPageChange: (newPage: number) => void;
-  onChange: (id: string, value: string) => void;
-  onAccept: (id: string) => void;
-};
+const CardsGrid: React.FC = () => {
+  const { categories, activeSection, page, updateEntry, acceptEntry } =
+    useTranslationContext();
 
-const CardsGrid: React.FC<Props> = ({
-  entries,
-  pageSize = 20,
-  page,
-  onChange,
-  onAccept,
-}) => {
+  const pageSize = 20;
+
+  const currentSectionEntries = useMemo(() => {
+    return categories[activeSection] || [];
+  }, [categories, activeSection]);
+
   const start = (page - 1) * pageSize;
-  const slice = entries.slice(start, start + pageSize);
+  const slice = currentSectionEntries.slice(start, start + pageSize);
 
   return (
     <Grid container>
@@ -36,8 +28,8 @@ const CardsGrid: React.FC<Props> = ({
           <TranslationCard
             entry={e}
             index={idx}
-            onChange={onChange}
-            onAccept={onAccept}
+            onChange={updateEntry}
+            onAccept={acceptEntry}
           />
         </Grid>
       ))}

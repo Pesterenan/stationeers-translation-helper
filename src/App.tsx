@@ -1,51 +1,29 @@
 import React from "react";
 import Typography from "@mui/material/Typography";
-import {
-  Backdrop,
-  CircularProgress,
-  Grid,
-  Pagination,
-  Paper,
-} from "@mui/material";
+import { CircularProgress, Grid, Pagination, Paper } from "@mui/material";
 
 import CardsGrid from "./components/CardsGrid";
 import ProjectToolbar from "./components/ProjectToolbar";
 import SectionTabs from "./components/SectionTabs";
 
-import { useTranslationProject } from "./hooks/useTranslationProject";
+import { useTranslationContext } from "./context/TranslationContext";
 
 export default function App() {
   const {
-    entries,
+    categories,
+    activeSection,
     xmlDoc,
-    metadata,
     isLoading,
     page,
-    activeSection,
-    categories,
-    sections,
-    savedCount,
-    total,
-    percent,
-    searchTerm,
-    setSearchTerm,
-    setMetadata,
     setPage,
-    loadXml,
-    loadProgressJson,
-    updateEntry,
-    acceptEntry,
-    exportProgressJson,
-    downloadTranslatedXml,
-    changeTab,
-  } = useTranslationProject();
+  } = useTranslationContext();
 
   const hasXml = !!xmlDoc;
   const showContent = hasXml || isLoading;
   const showFooter = hasXml && !isLoading;
   const PAGE_SIZE = 20;
 
-  // Filtragem para o grid atual
+  // Filtragem para paginação
   const currentSectionEntries = React.useMemo(() => {
     return categories[activeSection] || [];
   }, [categories, activeSection]);
@@ -112,22 +90,7 @@ export default function App() {
           </Grid>
         </Grid>
 
-        <ProjectToolbar
-          entriesCount={entries.length}
-          hasXml={hasXml}
-          metadata={metadata}
-          savedCount={savedCount}
-          totalCount={total}
-          percent={percent}
-          searchTerm={searchTerm}
-          onSetSearchTerm={setSearchTerm}
-          onXml={loadXml}
-          onProgressJson={loadProgressJson}
-          onStartLoading={() => {}}
-          onExportProgress={exportProgressJson}
-          onDownloadXml={downloadTranslatedXml}
-          onSetMetadata={setMetadata}
-        />
+        <ProjectToolbar />
       </Grid>
 
       {/* Main Content Area (Tabs + Scrollable Grid) */}
@@ -170,12 +133,7 @@ export default function App() {
             ) : (
               <>
                 <Grid sx={{ zIndex: 10 }}>
-                  <SectionTabs
-                    sections={sections}
-                    activeSection={activeSection}
-                    categories={categories}
-                    onChange={changeTab}
-                  />
+                  <SectionTabs />
                 </Grid>
 
                 <Grid
@@ -186,14 +144,7 @@ export default function App() {
                     marginBottom: "4.5rem", // Espaço para o footer
                   }}
                 >
-                  <CardsGrid
-                    entries={currentSectionEntries}
-                    page={page}
-                    pageSize={PAGE_SIZE}
-                    onPageChange={setPage}
-                    onChange={updateEntry}
-                    onAccept={acceptEntry}
-                  />
+                  <CardsGrid />
                 </Grid>
               </>
             )}
