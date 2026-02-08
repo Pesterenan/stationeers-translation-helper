@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App.tsx";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { TranslationProvider } from "./context/TranslationContext.tsx";
+import { UIProvider } from "./context/UIContext.tsx";
 
 const theme = createTheme({
   palette: { mode: "dark" },
@@ -14,7 +15,9 @@ createRoot(document.getElementById("root")!).render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <TranslationProvider>
-        <App />
+        <UIProvider>
+          <App />
+        </UIProvider>
       </TranslationProvider>
     </ThemeProvider>
   </StrictMode>,
