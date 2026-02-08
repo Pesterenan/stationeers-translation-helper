@@ -1,20 +1,39 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Typography from "@mui/material/Typography";
 import { CircularProgress, Grid, Pagination, Paper } from "@mui/material";
 
 import CardsGrid from "./components/CardsGrid";
 import ProjectToolbar from "./components/ProjectToolbar";
 import SectionTabs from "./components/SectionTabs";
+import DialogGoToPage from "./components/DialogGoToPage";
 
 import { useTranslationContext } from "./context/TranslationContext";
+import { useUIContext } from "./context/UIContext";
 
 export default function App() {
   const { totalPages, xmlDoc, isLoading, page, setPage } =
     useTranslationContext();
+  const { openDialog } = useUIContext();
 
   const hasXml = !!xmlDoc;
   const showContent = hasXml || isLoading;
   const showFooter = hasXml && !isLoading;
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // CTRL+G (or CMD+G) to open Go To Page
+      if ((e.ctrlKey || e.metaKey) && e.key === "g") {
+        if (hasXml) {
+          e.preventDefault();
+          openDialog("GOTO_PAGE");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [hasXml, openDialog]);
 
   // ---- render ----
   return (
@@ -24,6 +43,9 @@ export default function App() {
       flexWrap="nowrap"
       sx={{ height: "100vh", overflow: "hidden" }}
     >
+      {/* Diálogos Globais */}
+      <DialogGoToPage />
+
       {/* Header & Toolbar Section */}
       <Grid
         container
