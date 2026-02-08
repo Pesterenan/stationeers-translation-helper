@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import Grid from "@mui/material/Grid";
 import TranslationCard from "./TranslationCard";
 import { useTranslationContext } from "../context/TranslationContext";
+import DialogGoToPage from "./DialogGoToPage";
 
 const CardsGrid: React.FC = () => {
   const { categories, activeSection, page, updateEntry, acceptEntry } =
@@ -18,6 +19,7 @@ const CardsGrid: React.FC = () => {
 
   return (
     <Grid container>
+      <DialogGoToPage />
       {slice.map((e, idx) => (
         <Grid
           key={e.id}

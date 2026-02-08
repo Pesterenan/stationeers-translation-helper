@@ -36,6 +36,7 @@ interface TranslationContextType {
   percent: number;
   savedCount: number;
   total: number;
+  totalPages: number;
 
   // Setters
   setMetadata: (meta: IMetadata) => void;
@@ -63,10 +64,6 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [originalFileName, setOriginalFileName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
-
-  // Pagination & Navigation
-  const [page, setPage] = useState<number>(1);
-  const [activeSection, setActiveSection] = useState<string>("");
 
   // Group entries by section (Memoized: only re-runs when entries change)
   const groupedEntries = useMemo(() => {
@@ -106,6 +103,21 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     return result;
   }, [groupedEntries, searchTerm]);
 
+  // Pagination & Navigation
+  const [page, setPage] = useState<number>(1);
+  const [activeSection, setActiveSection] = useState<string>("");
+
+  const PAGE_SIZE = 20;
+
+  // Filtragem para paginação
+  const currentSectionEntries = React.useMemo(() => {
+    return categories[activeSection] || [];
+  }, [categories, activeSection]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(currentSectionEntries.length / PAGE_SIZE),
+  );
   const sections = useMemo(() => Object.keys(categories).sort(), [categories]);
 
   // Ensure activeSection is valid
@@ -305,6 +317,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       percent,
       savedCount,
       total,
+      totalPages,
       setMetadata,
       setPage,
       setSearchTerm,
@@ -329,6 +342,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       percent,
       savedCount,
       total,
+totalPages,
       // Actions que são estáveis (useCallback) não precisam entrar no deps array
       // se quisermos ser puristas, mas é seguro listar.
       acceptEntry,

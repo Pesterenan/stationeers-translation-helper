@@ -9,29 +9,12 @@ import SectionTabs from "./components/SectionTabs";
 import { useTranslationContext } from "./context/TranslationContext";
 
 export default function App() {
-  const {
-    categories,
-    activeSection,
-    xmlDoc,
-    isLoading,
-    page,
-    setPage,
-  } = useTranslationContext();
+  const { totalPages, xmlDoc, isLoading, page, setPage } =
+    useTranslationContext();
 
   const hasXml = !!xmlDoc;
   const showContent = hasXml || isLoading;
   const showFooter = hasXml && !isLoading;
-  const PAGE_SIZE = 20;
-
-  // Filtragem para paginação
-  const currentSectionEntries = React.useMemo(() => {
-    return categories[activeSection] || [];
-  }, [categories, activeSection]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(currentSectionEntries.length / PAGE_SIZE),
-  );
 
   // ---- render ----
   return (
