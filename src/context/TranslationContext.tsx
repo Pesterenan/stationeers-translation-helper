@@ -31,6 +31,7 @@ interface TranslationContextType {
   searchTerm: string;
   sections: string[];
   xmlDoc: XMLDocument | null;
+  lastAutoSave: Date | null;
 
   // Stats
   percent: number;
@@ -64,6 +65,13 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [originalFileName, setOriginalFileName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
+
+  // Helper to get storage key
+  const getStorageKey = useCallback((lang?: string) => {
+    const suffix = lang?.toLowerCase().replace(/\s+/g, "-") || "unknown";
+    return `stationeers_draft_${suffix}`;
+  }, []);
 
   // Group entries by section (Memoized: only re-runs when entries change)
   const groupedEntries = useMemo(() => {
@@ -138,6 +146,32 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const total = entries.length;
   const percent = total === 0 ? 0 : Math.round((savedCount / total) * 100);
 
+  // Auto-save logic
+  useEffect(() => {
+    if (entries.length === 0 || !metadata?.Language) return;
+
+    const timeoutId = setTimeout(() => {
+      const translations = entries.reduce<Record<string, string>>((acc, e) => {
+        if (e.translation) {
+          const key = `${e.section}|${e.key}`;
+          acc[key] = e.translation;
+        }
+        return acc;
+      }, {});
+
+      const draftData = {
+        metadata,
+        translations,
+        timestamp: new Date().toISOString(),
+      };
+
+      localStorage.setItem(getStorageKey(metadata.Language), JSON.stringify(draftData));
+      setLastAutoSave(new Date());
+    }, 3000); // Save after 3s of inactivity
+
+    return () => clearTimeout(timeoutId);
+  }, [entries, metadata, getStorageKey]);
+
   // Actions
   const loadXml = useCallback((text: string, fileName?: string) => {
     setIsLoading(true);
@@ -149,11 +183,33 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           metadata: meta,
         } = parseStationeersXml(text);
 
-        const initialized = parsedEntries.map((e) => ({
-          ...e,
-          savedTranslation: undefined,
-          status: "unchanged" as Entry["status"],
-        }));
+        // Check for existing draft in LocalStorage
+        const storageKey = getStorageKey(meta.Language || "");
+        const savedDraft = localStorage.getItem(storageKey);
+        let draftTranslations: Record<string, string> = {};
+
+        if (savedDraft) {
+          try {
+            const parsed = JSON.parse(savedDraft);
+            draftTranslations = parsed.translations || {};
+            // Opcional: Você pode querer avisar o usuário que um rascunho foi recuperado
+            console.log(`Rascunho para ${meta.Language} recuperado do LocalStorage.`);
+          } catch (e) {
+            console.error("Erro ao ler rascunho do LocalStorage", e);
+          }
+        }
+
+        const initialized = parsedEntries.map((e) => {
+          const combinedKey = `${e.section}|${e.key}`;
+          const savedValue = draftTranslations[combinedKey];
+
+          return {
+            ...e,
+            savedTranslation: savedValue,
+            translation: savedValue || undefined,
+            status: savedValue ? ("saved" as const) : ("unchanged" as const),
+          };
+        });
 
         const uniqueSections = Array.from(
           new Set(parsedEntries.map((e) => e.section)),
@@ -173,7 +229,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     }, 600); // 600ms para aguardar animação da UI
-  }, []);
+  }, [getStorageKey]);
 
   // Load mock data on development
   useEffect(() => {
@@ -329,6 +385,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       searchTerm,
       sections,
       xmlDoc,
+      lastAutoSave,
       percent,
       savedCount,
       total,

@@ -25,6 +25,7 @@ const ProjectToolbar: React.FC = () => {
     savedCount,
     searchTerm,
     total,
+    lastAutoSave,
     downloadTranslatedXml,
     exportProgressJson,
     loadProgressJson,
@@ -147,6 +148,11 @@ const ProjectToolbar: React.FC = () => {
                 [`& .${linearProgressClasses.bar}`]: { borderRadius: 5 },
               }}
             />
+            {lastAutoSave && (
+              <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'flex-end', mt: 0.5, fontSize: '0.6rem' }}>
+                Rascunho salvo às {lastAutoSave.toLocaleTimeString()}
+              </Typography>
+            )}
           </Grid>
         </Grid>
       )}
