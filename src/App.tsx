@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import Typography from "@mui/material/Typography";
 import { CircularProgress, Grid, Pagination, Paper } from "@mui/material";
 
@@ -145,7 +145,6 @@ export default function App() {
                   size="grow"
                   sx={{
                     overflowY: "auto",
-                    p: 2,
                     marginBottom: "4.5rem", // Espaço para o footer
                   }}
                 >

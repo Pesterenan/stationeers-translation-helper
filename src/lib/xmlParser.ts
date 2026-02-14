@@ -13,14 +13,14 @@ function getElementPath(el: Element): string {
   const parts: string[] = [];
   let node: Element | null = el;
   while (node && node.nodeType === 1) {
-    const parent = node.parentElement;
+    const parent: Element | null = node.parentElement;
     if (!parent) {
       parts.unshift(node.nodeName);
       break;
     }
     // Encontra o índice base-1 entre irmãos com a mesma tag
     const siblings = Array.from(parent.children).filter(
-      (c) => c.nodeName === node!.nodeName,
+      (c: Element) => c.nodeName === node!.nodeName,
     );
     const idx = siblings.indexOf(node) + 1;
     parts.unshift(`${node.nodeName}:nth(${idx})`);
@@ -57,8 +57,8 @@ function findNodeBySelector(
     let idx = 1;
     if (nthPart) idx = parseInt(nthPart.replace(")", ""), 10);
 
-    const childrenSame = Array.from(current.children).filter(
-      (c) => c.nodeName === tag,
+    const childrenSame: Element[] = Array.from(current.children).filter(
+      (c: Element) => c.nodeName === tag,
     );
     current = childrenSame[idx - 1] ?? null;
     if (!current) return null;
