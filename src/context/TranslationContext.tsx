@@ -175,6 +175,21 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     }, 600); // 600ms para aguardar animação da UI
   }, []);
 
+  // Load mock data on development
+  useEffect(() => {
+    fetch("/mock_language.xml")
+      .then((res) => {
+        if (res.ok) return res.text();
+        throw new Error("Mock not found");
+      })
+      .then((text) => {
+        loadXml(text, "mock_language.xml");
+      })
+      .catch(() => {
+        // Silently ignore if mock is not available
+      });
+  }, [loadXml]);
+
   const loadProgressJson = useCallback((jsonText: string) => {
     setIsLoading(true);
     setTimeout(() => {

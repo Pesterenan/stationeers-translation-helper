@@ -1,0 +1,37 @@
+<Language xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>English (Mock Guide)</Name>
+  <Code>EN</Code>
+  <Font>font_english</Font>
+  <Interface>
+    <Record>
+      <Key>Button_Save</Key>
+      <Value>Save Changes</Value>
+    </Record>
+    <Record>
+      <Key>Menu_AudioSettings</Key>
+      <Value>Audio and Music Settings</Value>
+    </Record>
+    <Record>
+      <Key>Label_PlayerTool</Key>
+      <Value>Player's Multi-Tool</Value>
+    </Record>
+  </Interface>
+  <GameStrings>
+    <Record>
+      <Key>Welcome_Message</Key>
+      <Value><![CDATA[Welcome to {LINK:Stationpedia;Stationpedia}! Press {KEY:H} to open the guide.]]></Value>
+    </Record>
+    <Record>
+      <Key>Color_Demo</Key>
+      <Value><![CDATA[You can use <color=red>red</color>, <color=yellow>yellow</color> or <color=green>green</color> text.]]></Value>
+    </Record>
+    <Record>
+      <Key>Shortcuts_Demo</Key>
+      <Value><![CDATA[Try the shortcuts! Click these or use Ctrl+Y/U/I: {LINK:Page1;Tag 1}, {LINK:Page2;Tag 2}, {LINK:Page3;Tag 3}.]]></Value>
+    </Record>
+    <Record>
+      <Key>Long_Text_Example</Key>
+      <Value><![CDATA[This is a longer text to demonstrate how the list item expands vertically when the content is too big for a single line, keeping everything readable and organized in the list.]]></Value>
+    </Record>
+  </GameStrings>
+</Language>
