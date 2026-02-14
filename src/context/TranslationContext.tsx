@@ -107,7 +107,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [page, setPage] = useState<number>(1);
   const [activeSection, setActiveSection] = useState<string>("");
 
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = 30;
 
   // Filtragem para paginação
   const currentSectionEntries = React.useMemo(() => {
@@ -240,7 +240,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     if (originalFileName) {
       const parts = originalFileName.split(".");
       if (parts.length > 1) {
-        const ext = parts.pop();
+        parts.pop();
         fileName = `${parts.join(".")}_progress.json`;
       } else {
         fileName = `${originalFileName}_progress.json`;
@@ -275,8 +275,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         if (originalFileName) {
           const parts = originalFileName.split(".");
           if (parts.length > 1) {
-            const ext = parts.pop();
-            fileName = `${parts.join(".")}_translated.${ext}`;
+            parts.pop(); // Remove extension
+            fileName = `${parts.join(".")}_translated.xml`;
           } else {
             fileName = `${originalFileName}_translated.xml`;
           }

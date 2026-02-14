@@ -1,17 +1,14 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useTheme, alpha } from "@mui/material/styles";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import type { Entry } from "../types";
-import { Badge } from "@mui/material";
+import { Badge, Grid } from "@mui/material";
 
 type Props = {
   entry: Entry;
@@ -43,7 +40,7 @@ const OriginalTextDisplay: React.FC<{
   return (
     <Typography
       variant="body2"
-      sx={{ whiteSpace: "pre-wrap", mt: 0.5, lineHeight: 1.6 }}
+      whiteSpace="pre-wrap"
     >
       {parts.map((part, i) => {
         if (
@@ -91,7 +88,7 @@ const OriginalTextDisplay: React.FC<{
   );
 };
 
-const TranslationCardInner: React.FC<Props> = ({
+const TranslationItemInner: React.FC<Props> = ({
   entry,
   index,
   onChange,
@@ -111,20 +108,6 @@ const TranslationCardInner: React.FC<Props> = ({
   useEffect(() => {
     setTranslation(entry.translation ?? "");
   }, [entry.translation]);
-
-  // background by status using theme
-  const backgroundColor =
-    entry.status === "edited"
-      ? alpha(
-          theme.palette.warning.main,
-          theme.palette.mode === "dark" ? 0.16 : 0.12,
-        )
-      : entry.status === "saved"
-        ? alpha(
-            theme.palette.success.main,
-            theme.palette.mode === "dark" ? 0.16 : 0.12,
-          )
-        : "transparent";
 
   // decide if should be multiline (descriptions / text or long original)
   const shouldMultiline =
@@ -152,7 +135,9 @@ const TranslationCardInner: React.FC<Props> = ({
           handleAccept();
           if (index !== undefined) {
             setTimeout(() => {
-              const nextElement = document.getElementById(`translation-input-${index + 1}`);
+              const nextElement = document.getElementById(
+                `translation-input-${index + 1}`,
+              );
               if (nextElement) {
                 nextElement.focus();
               }
@@ -251,115 +236,161 @@ const TranslationCardInner: React.FC<Props> = ({
     [translation],
   );
 
+  // background by status using theme
+  const backgroundColor =
+    entry.status === "edited"
+      ? alpha(
+          theme.palette.warning.main,
+          theme.palette.mode === "dark" ? 0.16 : 0.12,
+        )
+      : entry.status === "saved"
+        ? alpha(
+            theme.palette.success.main,
+            theme.palette.mode === "dark" ? 0.16 : 0.12,
+          )
+        : "transparent";
+
   return (
-    <Card
-      variant="elevation"
-      sx={{ backgroundColor, transition: "background-color 0.2s ease" }}
+    <Grid
+      alignItems="flex-start"
+      container
+      onKeyDown={handleKeyDown}
+      padding={1}
+      sx={{
+        backgroundColor,
+        transition: "background-color 0.2s ease",
+      }}
     >
-      <CardContent>
-        <Grid container alignItems="center" spacing={1}>
-          <Grid size="auto" sx={{ flexGrow: 1 }}>
-            <Box
+      {/* Coluna 1: Key & Subkey */}
+      <Grid paddingInline={1} size={2}>
+        <Typography
+          color="text.secondary"
+          fontSize="0.65rem"
+          fontWeight="bold"
+          textTransform="uppercase"
+          variant="caption"
+        >
+          Chave:
+        </Typography>
+        <Grid container justifyContent="space-between">
+          <Typography
+            fontWeight="bold"
+            variant="body2"
+            sx={{
+              wordBreak: "break-all",
+              lineHeight: 1.2,
+            }}
+          >
+            {displayKey}
+          </Typography>
+          {subkeyLabel && (
+            <Typography
+              variant="caption"
               sx={{
-                display: "flex",
-                alignItems: "baseline",
-                flexWrap: "wrap",
-                gap: 0.5,
+                fontFamily: "monospace",
+                bgcolor: "action.selected",
+                px: 0.5,
+                borderRadius: 1,
+                alignSelf: "flex-start",
               }}
             >
-              <Typography component="span" fontWeight="bold" variant="body2">
-                {displayKey}
-              </Typography>
-              {subkeyLabel && (
-                <Typography
-                  component="span"
-                  variant="caption"
-                  sx={{
-                    fontFamily: "monospace",
-                    bgcolor: "action.hover",
-                    px: 0.5,
-                    borderRadius: 1,
-                  }}
-                >
-                  {subkeyLabel}
-                </Typography>
-              )}
-            </Box>
-            <Typography
-              component="div"
-              variant="caption"
-              color="text.secondary"
-            >
-              {entry.section} &bull; {entry.tagName}
+              {subkeyLabel}
             </Typography>
-          </Grid>
-
-          <Grid>
-            <Tooltip title="Copiar original para o campo">
-              <Button
-                size="small"
-                onClick={handleCopyOriginal}
-                aria-label="copiar original"
-                sx={{ minWidth: 32 }}
-              >
-                <ContentCopyIcon fontSize="small" />
-              </Button>
-            </Tooltip>
-          </Grid>
+          )}
         </Grid>
+      </Grid>
 
-        <Box sx={{ mt: 1 }}>
-          <Typography variant="caption" color="text.secondary">
-            Original
-          </Typography>
-          <OriginalTextDisplay
-            id={index !== undefined ? `original-text-${index}` : undefined}
-            text={entry.original ?? ""}
-            onTagClick={handleTagClick}
-          />
-        </Box>
-
-        <Grid
-          container
-          alignItems="center"
-          spacing={1}
-          sx={{ mt: 1 }}
-          onKeyDown={handleKeyDown}
+      {/* Coluna 2: Original Text */}
+      <Grid paddingInline={1} size="grow">
+        <Typography
+          color="text.secondary"
+          fontSize="0.65rem"
+          fontWeight="bold"
+          textTransform="uppercase"
+          variant="caption"
         >
-          <Grid size="grow">
-            <TextField
-              id={
-                index !== undefined ? `translation-input-${index}` : undefined
-              }
-              inputRef={inputRef}
-              fullWidth
-              multiline={shouldMultiline}
-              minRows={shouldMultiline ? 3 : 1}
-              label="Tradução"
-              value={translation}
-              onChange={(e) => setTranslation(e.target.value)}
-              onBlur={commitChange}
-              size="small"
-            />
-          </Grid>
+          Original:
+        </Typography>
+        <OriginalTextDisplay
+          id={index !== undefined ? `original-text-${index}` : undefined}
+          text={entry.original ?? ""}
+          onTagClick={handleTagClick}
+        />
+      </Grid>
 
-          <Grid>
-            <Tooltip title="Aceitar (Ctrl/Cmd + M/Enter)">
-              <Button
-                size="small"
-                variant="contained"
-                onClick={handleAccept}
-                sx={{ minWidth: 40, p: 1 }}
-              >
-                <CheckIcon fontSize="small" />
-              </Button>
-            </Tooltip>
-          </Grid>
+      {/* Coluna 3: Translation Input */}
+      <Grid container paddingInline={1} size="grow">
+        <Typography
+          color="text.secondary"
+          fontSize="0.65rem"
+          fontWeight="bold"
+          textTransform="uppercase"
+          variant="caption"
+        >
+          Tradução:
+        </Typography>
+        <TextField
+          id={index !== undefined ? `translation-input-${index}` : undefined}
+          inputRef={inputRef}
+          fullWidth
+          multiline={shouldMultiline}
+          minRows={1}
+          maxRows={10}
+          placeholder="..."
+          value={translation}
+          onChange={(e) => setTranslation(e.target.value)}
+          onBlur={commitChange}
+          size="small"
+          variant="outlined"
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? alpha(theme.palette.background.paper, 0.5)
+                  : "white",
+            },
+          }}
+        />
+      </Grid>
+
+      {/* Coluna 4: Actions */}
+      <Grid paddingInline={1} size={1}>
+        <Typography
+          color="text.secondary"
+          fontSize="0.65rem"
+          fontWeight="bold"
+          textTransform="uppercase"
+          variant="caption"
+        >
+          Ações:
+        </Typography>
+        <Grid container gap={2} justifyContent="center">
+          <Tooltip title="Copiar original para o campo (Ctrl+Shift+C)">
+            <Button
+              size="small"
+              onClick={handleCopyOriginal}
+              aria-label="copiar original"
+              sx={{ minWidth: 40, height: 40 }}
+            >
+              <ContentCopyIcon fontSize="small" />
+            </Button>
+          </Tooltip>
+          <Tooltip title="Aceitar (Ctrl/Cmd + Enter)">
+            <Button
+              size="small"
+              variant="contained"
+              onClick={handleAccept}
+              color={entry.status === "saved" ? "success" : "primary"}
+              sx={{ minWidth: 40, height: 40 }}
+            >
+              <CheckIcon fontSize="small" />
+            </Button>
+          </Tooltip>
         </Grid>
-      </CardContent>
-    </Card>
+      </Grid>
+    </Grid>
   );
 };
 
-const TranslationCard = React.memo(TranslationCardInner);
-export default TranslationCard;
+const TranslationItem = React.memo(TranslationItemInner);
+export default TranslationItem;

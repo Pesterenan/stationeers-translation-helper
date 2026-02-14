@@ -1,14 +1,14 @@
 import React, { useMemo } from "react";
 import Grid from "@mui/material/Grid";
-import TranslationCard from "./TranslationCard";
+import TranslationItem from "./TranslationItem";
 import { useTranslationContext } from "../context/TranslationContext";
 import DialogGoToPage from "./DialogGoToPage";
 
-const CardsGrid: React.FC = () => {
+const TranslationsList: React.FC = () => {
   const { categories, activeSection, page, updateEntry, acceptEntry } =
     useTranslationContext();
 
-  const pageSize = 20;
+  const pageSize = 30;
 
   const currentSectionEntries = useMemo(() => {
     return categories[activeSection] || [];
@@ -18,16 +18,21 @@ const CardsGrid: React.FC = () => {
   const slice = currentSectionEntries.slice(start, start + pageSize);
 
   return (
-    <Grid container>
+    <Grid container direction="column" wrap="nowrap">
       <DialogGoToPage />
       {slice.map((e, idx) => (
         <Grid
           key={e.id}
-          padding={1}
-          flexGrow={1}
-          size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+          sx={{ 
+            width: "100%",
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            "&:hover": {
+              bgcolor: "action.hover",
+            }
+          }}
         >
-          <TranslationCard
+          <TranslationItem
             entry={e}
             index={idx}
             onChange={updateEntry}
@@ -39,4 +44,4 @@ const CardsGrid: React.FC = () => {
   );
 };
 
-export default CardsGrid;
+export default TranslationsList;

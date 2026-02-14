@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import Typography from "@mui/material/Typography";
 import { CircularProgress, Grid, Pagination, Paper } from "@mui/material";
 
-import CardsGrid from "./components/CardsGrid";
+import TranslationsList from "./components/TranslationsList";
 import ProjectToolbar from "./components/ProjectToolbar";
 import SectionTabs from "./components/SectionTabs";
 import DialogGoToPage from "./components/DialogGoToPage";
@@ -148,7 +148,7 @@ export default function App() {
                     marginBottom: "4.5rem", // Espaço para o footer
                   }}
                 >
-                  <CardsGrid />
+                  <TranslationsList />
                 </Grid>
               </>
             )}
