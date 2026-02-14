@@ -58,8 +58,7 @@ const ProjectToolbar: React.FC = () => {
     <Grid
       container
       flexDirection="column"
-      rowGap={1}
-      paddingBlock={2}
+      rowGap={2}
       width="100%"
     >
       {/* Actions Toolbar */}
@@ -106,30 +105,8 @@ const ProjectToolbar: React.FC = () => {
           container
           flexDirection="row"
           flexWrap="nowrap"
-          columnGap={8}
-          marginInline={2}
         >
-          <Grid container flexDirection="column" size="grow">
-            <Grid container flexDirection="row" justifyContent="space-between">
-              <Typography variant="caption" fontWeight="bold">
-                Progresso Total
-              </Typography>
-              <Typography variant="caption">
-                {savedCount} / {total} ({percent}%)
-              </Typography>
-            </Grid>
-            <LinearProgress
-              variant="determinate"
-              value={percent}
-              sx={{
-                height: 10,
-                borderRadius: 5,
-                backgroundColor: theme.palette.grey[200],
-                [`& .${linearProgressClasses.bar}`]: { borderRadius: 5 },
-              }}
-            />
-          </Grid>
-          <Grid container alignItems="center" gap={2}>
+          <Grid container alignItems="center" paddingInline={2}>
             <TextField
               id="search"
               slotProps={{
@@ -149,6 +126,26 @@ const ProjectToolbar: React.FC = () => {
               onChange={(event) => setSearchText(event.currentTarget.value)}
               value={searchText}
               variant="outlined"
+            />
+          </Grid>
+           <Grid container flexDirection="column" size="grow" paddingInline={2}>
+            <Grid container flexDirection="row" justifyContent="space-between">
+              <Typography variant="caption" fontWeight="bold">
+                Progresso Total
+              </Typography>
+              <Typography variant="caption">
+                {savedCount} / {total} ({percent}%)
+              </Typography>
+            </Grid>
+            <LinearProgress
+              variant="determinate"
+              value={percent}
+              sx={{
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: theme.palette.grey[200],
+                [`& .${linearProgressClasses.bar}`]: { borderRadius: 5 },
+              }}
             />
           </Grid>
         </Grid>

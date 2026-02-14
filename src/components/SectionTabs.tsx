@@ -9,7 +9,7 @@ const SectionTabs: React.FC = () => {
   if (sections.length === 0) return null;
 
   return (
-    <Paper variant="outlined" sx={{ mb: 2 }}>
+    <Paper variant="outlined">
       <Tabs
         value={activeSection || false}
         onChange={(_, newValue) => changeTab(newValue)}
