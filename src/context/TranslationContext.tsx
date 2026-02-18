@@ -29,6 +29,7 @@ interface TranslationContextType {
   metadata: IMetadata | undefined;
   page: number;
   searchTerm: string;
+  hideAccepted: boolean;
   sections: string[];
   xmlDoc: XMLDocument | null;
   lastAutoSave: Date | null;
@@ -43,6 +44,7 @@ interface TranslationContextType {
   setMetadata: (meta: IMetadata) => void;
   setPage: (page: number) => void;
   setSearchTerm: (term: string) => void;
+  setHideAccepted: (hide: boolean) => void;
 
   // Actions
   acceptEntry: (id: string) => void;
@@ -65,6 +67,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [originalFileName, setOriginalFileName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [hideAccepted, setHideAccepted] = useState<boolean>(false);
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
 
   // Helper to get storage key
@@ -83,355 +86,364 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     }, {});
   }, [entries]);
 
-  // Filter categories based on search term
-  const categories = useMemo(() => {
-    if (!searchTerm || searchTerm.length <= 2) {
-      return groupedEntries;
-    }
-
-    const lowerTerm = searchTerm.toLowerCase();
-    const result: Record<string, Entry[]> = {};
-
-    Object.entries(groupedEntries).forEach(([section, sectionEntries]) => {
-      const matches = sectionEntries.filter((entry) => {
-        const matchKey = entry.key.toLowerCase().includes(lowerTerm);
-        const matchOriginal = entry.original.toLowerCase().includes(lowerTerm);
-        const matchTranslation = entry.savedTranslation
-          ?.toLowerCase()
-          .includes(lowerTerm);
-
-        return matchKey || matchOriginal || matchTranslation;
+    // Filter categories based on search term AND hideAccepted
+    const categories = useMemo(() => {
+      const lowerTerm = searchTerm.toLowerCase();
+      const isSearchActive = searchTerm.length > 2;
+      const result: Record<string, Entry[]> = {};
+  
+      Object.entries(groupedEntries).forEach(([section, sectionEntries]) => {
+        const matches = sectionEntries.filter((entry) => {
+          // First, check hideAccepted
+          if (hideAccepted && entry.status === "saved") {
+            return false;
+          }
+  
+          // Then, check search if active
+          if (isSearchActive) {
+            const matchKey = entry.key.toLowerCase().includes(lowerTerm);
+            const matchOriginal = entry.original.toLowerCase().includes(lowerTerm);
+            const matchTranslation = entry.savedTranslation
+              ?.toLowerCase()
+              .includes(lowerTerm);
+  
+            return matchKey || matchOriginal || matchTranslation;
+          }
+  
+          return true;
+        });
+  
+        if (matches.length > 0) {
+          result[section] = matches;
+        }
       });
-
-      if (matches.length > 0) {
-        result[section] = matches;
+  
+      return result;
+    }, [groupedEntries, searchTerm, hideAccepted]);
+  
+    // Pagination & Navigation
+    const [page, setPage] = useState<number>(1);
+    const [activeSection, setActiveSection] = useState<string>("");
+  
+    const PAGE_SIZE = 30;
+  
+    // Filtragem para paginação
+    const currentSectionEntries = React.useMemo(() => {
+      return categories[activeSection] || [];
+    }, [categories, activeSection]);
+  
+    const totalPages = Math.max(
+      1,
+      Math.ceil(currentSectionEntries.length / PAGE_SIZE),
+    );
+    const sections = useMemo(() => Object.keys(categories).sort(), [categories]);
+  
+    // Ensure activeSection is valid
+    useEffect(() => {
+      if (sections.length > 0 && !categories[activeSection]) {
+        setActiveSection(sections[0]);
+        setPage(1);
+      } else if (sections.length === 0) {
+        setActiveSection("");
       }
-    });
-
-    return result;
-  }, [groupedEntries, searchTerm]);
-
-  // Pagination & Navigation
-  const [page, setPage] = useState<number>(1);
-  const [activeSection, setActiveSection] = useState<string>("");
-
-  const PAGE_SIZE = 30;
-
-  // Filtragem para paginação
-  const currentSectionEntries = React.useMemo(() => {
-    return categories[activeSection] || [];
-  }, [categories, activeSection]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(currentSectionEntries.length / PAGE_SIZE),
-  );
-  const sections = useMemo(() => Object.keys(categories).sort(), [categories]);
-
-  // Ensure activeSection is valid
-  useEffect(() => {
-    if (sections.length > 0 && !categories[activeSection]) {
-      setActiveSection(sections[0]);
-      setPage(1);
-    } else if (sections.length === 0) {
-      setActiveSection("");
-    }
-  }, [sections, activeSection, categories]);
-
-  // Statistics
-  const savedCount = useMemo(
-    () => entries.filter((e) => e.status === "saved").length,
-    [entries],
-  );
-  const total = entries.length;
-  const percent = total === 0 ? 0 : Math.round((savedCount / total) * 100);
-
-  // Auto-save logic
-  useEffect(() => {
-    if (entries.length === 0 || !metadata?.Language) return;
-
-    const timeoutId = setTimeout(() => {
+    }, [sections, activeSection, categories]);
+  
+  
+    // Statistics
+    const savedCount = useMemo(
+      () => entries.filter((e) => e.status === "saved").length,
+      [entries],
+    );
+    const total = entries.length;
+    const percent = total === 0 ? 0 : Math.round((savedCount / total) * 100);
+  
+    // Auto-save logic
+    useEffect(() => {
+      if (entries.length === 0 || !metadata?.Language) return;
+  
+      const timeoutId = setTimeout(() => {
+        const translations = entries.reduce<Record<string, string>>((acc, e) => {
+          if (e.translation) {
+            const key = `${e.section}|${e.key}`;
+            acc[key] = e.translation;
+          }
+          return acc;
+        }, {});
+  
+        const draftData = {
+          metadata,
+          translations,
+          timestamp: new Date().toISOString(),
+        };
+  
+        localStorage.setItem(getStorageKey(metadata.Language), JSON.stringify(draftData));
+        setLastAutoSave(new Date());
+      }, 3000); // Save after 3s of inactivity
+  
+      return () => clearTimeout(timeoutId);
+    }, [entries, metadata, getStorageKey]);
+  
+    // Actions
+    const loadXml = useCallback((text: string, fileName?: string) => {
+      setIsLoading(true);
+      setTimeout(() => {
+        try {
+          const {
+            entries: parsedEntries,
+            xmlDocument,
+            metadata: meta,
+          } = parseStationeersXml(text);
+  
+          // Check for existing draft in LocalStorage
+          const storageKey = getStorageKey(meta.Language || "");
+          const savedDraft = localStorage.getItem(storageKey);
+          let draftTranslations: Record<string, string> = {};
+  
+          if (savedDraft) {
+            try {
+              const parsed = JSON.parse(savedDraft);
+              draftTranslations = parsed.translations || {};
+              // Opcional: Você pode querer avisar o usuário que um rascunho foi recuperado
+              console.log(`Rascunho para ${meta.Language} recuperado do LocalStorage.`);
+            } catch (e) {
+              console.error("Erro ao ler rascunho do LocalStorage", e);
+            }
+          }
+  
+          const initialized = parsedEntries.map((e) => {
+            const combinedKey = `${e.section}|${e.key}`;
+            const savedValue = draftTranslations[combinedKey];
+  
+            return {
+              ...e,
+              savedTranslation: savedValue,
+              translation: savedValue || undefined,
+              status: savedValue ? ("saved" as const) : ("unchanged" as const),
+            };
+          });
+  
+          const uniqueSections = Array.from(
+            new Set(parsedEntries.map((e) => e.section)),
+          ).sort();
+          const firstSection = uniqueSections.length > 0 ? uniqueSections[0] : "";
+  
+          setEntries(initialized);
+          setXmlDoc(xmlDocument);
+          setMetadata(meta);
+          setOriginalFileName(fileName || "");
+          setActiveSection(firstSection);
+          setPage(1);
+        } catch (err: any) {
+          console.error("Erro ao parsear XML:", err);
+          alert("Erro ao parsear XML: " + (err?.message ?? String(err)));
+        } finally {
+          setIsLoading(false);
+        }
+      }, 600); // 600ms para aguardar animação da UI
+    }, [getStorageKey]);
+  
+    // Load mock data on development
+    useEffect(() => {
+      fetch("/mock_language.xml")
+        .then((res) => {
+          if (res.ok) return res.text();
+          throw new Error("Mock not found");
+        })
+        .then((text) => {
+          loadXml(text, "mock_language.xml");
+        })
+        .catch(() => {
+          // Silently ignore if mock is not available
+        });
+    }, [loadXml]);
+  
+    const loadProgressJson = useCallback((jsonText: string) => {
+      setIsLoading(true);
+      setTimeout(() => {
+        try {
+          const obj = JSON.parse(jsonText);
+          const translations: Record<string, string> = obj.translations ?? {};
+  
+          if (obj.metadata) {
+            setMetadata(obj.metadata);
+          }
+  
+          setEntries((prev) =>
+            prev.map((e) => {
+              const combinedKey = `${e.section}|${e.key}`;
+              const saved = translations[combinedKey];
+  
+              if (saved != null) {
+                return {
+                  ...e,
+                  savedTranslation: saved,
+                  translation: saved,
+                  status: saved ? "saved" : "unchanged",
+                };
+              }
+              return e;
+            }),
+          );
+        } catch (err: any) {
+          console.error("Erro ao importar progresso JSON:", err);
+          alert(
+            "Erro ao importar progresso JSON: " + (err?.message ?? String(err)),
+          );
+        } finally {
+          setIsLoading(false);
+        }
+      }, 600);
+    }, []);
+  
+    const updateEntry = useCallback((id: string, value: string) => {
+      setEntries((prev) =>
+        prev.map((e) => (e.id === id ? updateTranslationHelper(e, value) : e)),
+      );
+    }, []);
+  
+    const acceptEntry = useCallback((id: string) => {
+      setEntries((prev) =>
+        prev.map((e) => (e.id === id ? acceptTranslation(e) : e)),
+      );
+    }, []);
+  
+    const exportProgressJson = useCallback(() => {
       const translations = entries.reduce<Record<string, string>>((acc, e) => {
-        if (e.translation) {
-          const key = `${e.section}|${e.key}`;
-          acc[key] = e.translation;
+        if (e.savedTranslation) {
+          const exportKey = `${e.section}|${e.key}`;
+          acc[exportKey] = e.savedTranslation;
         }
         return acc;
       }, {});
-
-      const draftData = {
+  
+      const exportData = {
         metadata,
-        translations,
         timestamp: new Date().toISOString(),
+        translations,
       };
-
-      localStorage.setItem(getStorageKey(metadata.Language), JSON.stringify(draftData));
-      setLastAutoSave(new Date());
-    }, 3000); // Save after 3s of inactivity
-
-    return () => clearTimeout(timeoutId);
-  }, [entries, metadata, getStorageKey]);
-
-  // Actions
-  const loadXml = useCallback((text: string, fileName?: string) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      try {
-        const {
-          entries: parsedEntries,
-          xmlDocument,
-          metadata: meta,
-        } = parseStationeersXml(text);
-
-        // Check for existing draft in LocalStorage
-        const storageKey = getStorageKey(meta.Language || "");
-        const savedDraft = localStorage.getItem(storageKey);
-        let draftTranslations: Record<string, string> = {};
-
-        if (savedDraft) {
-          try {
-            const parsed = JSON.parse(savedDraft);
-            draftTranslations = parsed.translations || {};
-            // Opcional: Você pode querer avisar o usuário que um rascunho foi recuperado
-            console.log(`Rascunho para ${meta.Language} recuperado do LocalStorage.`);
-          } catch (e) {
-            console.error("Erro ao ler rascunho do LocalStorage", e);
-          }
-        }
-
-        const initialized = parsedEntries.map((e) => {
-          const combinedKey = `${e.section}|${e.key}`;
-          const savedValue = draftTranslations[combinedKey];
-
-          return {
-            ...e,
-            savedTranslation: savedValue,
-            translation: savedValue || undefined,
-            status: savedValue ? ("saved" as const) : ("unchanged" as const),
-          };
-        });
-
-        const uniqueSections = Array.from(
-          new Set(parsedEntries.map((e) => e.section)),
-        ).sort();
-        const firstSection = uniqueSections.length > 0 ? uniqueSections[0] : "";
-
-        setEntries(initialized);
-        setXmlDoc(xmlDocument);
-        setMetadata(meta);
-        setOriginalFileName(fileName || "");
-        setActiveSection(firstSection);
-        setPage(1);
-      } catch (err: any) {
-        console.error("Erro ao parsear XML:", err);
-        alert("Erro ao parsear XML: " + (err?.message ?? String(err)));
-      } finally {
-        setIsLoading(false);
-      }
-    }, 600); // 600ms para aguardar animação da UI
-  }, [getStorageKey]);
-
-  // Load mock data on development
-  useEffect(() => {
-    fetch("/mock_language.xml")
-      .then((res) => {
-        if (res.ok) return res.text();
-        throw new Error("Mock not found");
-      })
-      .then((text) => {
-        loadXml(text, "mock_language.xml");
-      })
-      .catch(() => {
-        // Silently ignore if mock is not available
-      });
-  }, [loadXml]);
-
-  const loadProgressJson = useCallback((jsonText: string) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      try {
-        const obj = JSON.parse(jsonText);
-        const translations: Record<string, string> = obj.translations ?? {};
-
-        if (obj.metadata) {
-          setMetadata(obj.metadata);
-        }
-
-        setEntries((prev) =>
-          prev.map((e) => {
-            const combinedKey = `${e.section}|${e.key}`;
-            const saved = translations[combinedKey];
-
-            if (saved != null) {
-              return {
-                ...e,
-                savedTranslation: saved,
-                translation: saved,
-                status: saved ? "saved" : "unchanged",
-              };
-            }
-            return e;
-          }),
-        );
-      } catch (err: any) {
-        console.error("Erro ao importar progresso JSON:", err);
-        alert(
-          "Erro ao importar progresso JSON: " + (err?.message ?? String(err)),
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }, 600);
-  }, []);
-
-  const updateEntry = useCallback((id: string, value: string) => {
-    setEntries((prev) =>
-      prev.map((e) => (e.id === id ? updateTranslationHelper(e, value) : e)),
-    );
-  }, []);
-
-  const acceptEntry = useCallback((id: string) => {
-    setEntries((prev) =>
-      prev.map((e) => (e.id === id ? acceptTranslation(e) : e)),
-    );
-  }, []);
-
-  const exportProgressJson = useCallback(() => {
-    const translations = entries.reduce<Record<string, string>>((acc, e) => {
-      if (e.savedTranslation) {
-        const exportKey = `${e.section}|${e.key}`;
-        acc[exportKey] = e.savedTranslation;
-      }
-      return acc;
-    }, {});
-
-    const exportData = {
-      metadata,
-      timestamp: new Date().toISOString(),
-      translations,
-    };
-
-    let fileName = "translation-progress.json";
-    if (originalFileName) {
-      const parts = originalFileName.split(".");
-      if (parts.length > 1) {
-        parts.pop();
-        fileName = `${parts.join(".")}_progress.json`;
-      } else {
-        fileName = `${originalFileName}_progress.json`;
-      }
-    } else {
-      fileName = `${
-        metadata?.Language?.toLowerCase().replace(/\s+/g, "-") || "stationeers"
-      }-translation-progress.json`;
-    }
-
-    downloadFile(
-      fileName,
-      JSON.stringify(exportData, null, 2),
-      "application/json;charset=utf-8",
-    );
-  }, [entries, metadata, originalFileName]);
-
-  const downloadTranslatedXml = useCallback(() => {
-    if (!xmlDoc) return alert("Nenhum XML carregado");
-    setIsLoading(true);
-    setTimeout(() => {
-      try {
-        let docToUse = xmlDoc;
-        if (metadata) {
-          const updatedXmlStr = updateMetadataInXml(xmlDoc, metadata);
-          const { xmlDocument } = parseStationeersXml(updatedXmlStr);
-          docToUse = xmlDocument;
-        }
-        const xml = buildTranslatedStationeersXml(docToUse, entries);
-
-        let fileName = "translated.xml";
-        if (originalFileName) {
-          const parts = originalFileName.split(".");
-          if (parts.length > 1) {
-            parts.pop(); // Remove extension
-            fileName = `${parts.join(".")}_translated.xml`;
-          } else {
-            fileName = `${originalFileName}_translated.xml`;
-          }
+  
+      let fileName = "translation-progress.json";
+      if (originalFileName) {
+        const parts = originalFileName.split(".");
+        if (parts.length > 1) {
+          parts.pop();
+          fileName = `${parts.join(".")}_progress.json`;
         } else {
-          const langName = metadata?.Language?.toLocaleLowerCase().replaceAll(
-            / /g,
-            "-",
-          );
-          if (langName) fileName = `${langName}.xml`;
+          fileName = `${originalFileName}_progress.json`;
         }
-
-        downloadFile(fileName, xml, "text/xml;charset=utf-8");
-      } catch (err: any) {
-        console.error("Erro ao gerar XML traduzido:", err);
-        alert("Erro ao gerar XML traduzido: " + (err?.message ?? String(err)));
-      } finally {
-        setIsLoading(false);
+      } else {
+        fileName = `${
+          metadata?.Language?.toLowerCase().replace(/\s+/g, "-") || "stationeers"
+        }-translation-progress.json`;
       }
-    }, 600);
-  }, [xmlDoc, metadata, entries, originalFileName]);
-
-  const changeTab = useCallback((newValue: string) => {
-    setActiveSection(newValue);
-    setPage(1);
-  }, []);
-
-  const value = useMemo(
-    () => ({
-      activeSection,
-      categories,
-      entries,
-      isLoading,
-      metadata,
-      page,
-      searchTerm,
-      sections,
-      xmlDoc,
-      lastAutoSave,
-      percent,
-      savedCount,
-      total,
-      totalPages,
-      setMetadata,
-      setPage,
-      setSearchTerm,
-      acceptEntry,
-      changeTab,
-      downloadTranslatedXml,
-      exportProgressJson,
-      loadProgressJson,
-      loadXml,
-      updateEntry,
-    }),
-    [
-      activeSection,
-      categories,
-      entries,
-      isLoading,
-      metadata,
-      page,
-      searchTerm,
-      sections,
-      xmlDoc,
-      percent,
-      savedCount,
-      total,
-totalPages,
-      // Actions que são estáveis (useCallback) não precisam entrar no deps array
-      // se quisermos ser puristas, mas é seguro listar.
-      acceptEntry,
-      changeTab,
-      downloadTranslatedXml,
-      exportProgressJson,
-      loadProgressJson,
-      loadXml,
-      updateEntry,
-    ],
-  );
-
-  return (
+  
+      downloadFile(
+        fileName,
+        JSON.stringify(exportData, null, 2),
+        "application/json;charset=utf-8",
+      );
+    }, [entries, metadata, originalFileName]);
+  
+    const downloadTranslatedXml = useCallback(() => {
+      if (!xmlDoc) return alert("Nenhum XML carregado");
+      setIsLoading(true);
+      setTimeout(() => {
+        try {
+          let docToUse = xmlDoc;
+          if (metadata) {
+            const updatedXmlStr = updateMetadataInXml(xmlDoc, metadata);
+            const { xmlDocument } = parseStationeersXml(updatedXmlStr);
+            docToUse = xmlDocument;
+          }
+          const xml = buildTranslatedStationeersXml(docToUse, entries);
+  
+          let fileName = "translated.xml";
+          if (originalFileName) {
+            const parts = originalFileName.split(".");
+            if (parts.length > 1) {
+              parts.pop(); // Remove extension
+              fileName = `${parts.join(".")}_translated.xml`;
+            } else {
+              fileName = `${originalFileName}_translated.xml`;
+            }
+          } else {
+            const langName = metadata?.Language?.toLocaleLowerCase().replaceAll(
+              / /g,
+              "-",
+            );
+            if (langName) fileName = `${langName}.xml`;
+          }
+  
+          downloadFile(fileName, xml, "text/xml;charset=utf-8");
+        } catch (err: any) {
+          console.error("Erro ao gerar XML traduzido:", err);
+          alert("Erro ao gerar XML traduzido: " + (err?.message ?? String(err)));
+        } finally {
+          setIsLoading(false);
+        }
+      }, 600);
+    }, [xmlDoc, metadata, entries, originalFileName]);
+  
+    const changeTab = useCallback((newValue: string) => {
+      setActiveSection(newValue);
+      setPage(1);
+    }, []);
+  
+      const value = useMemo(
+        () => ({
+          activeSection,
+          categories,
+          entries,
+          isLoading,
+          metadata,
+          page,
+          searchTerm,
+          hideAccepted,
+          sections,
+          xmlDoc,
+          lastAutoSave,
+          percent,
+          savedCount,
+          total,
+          totalPages,
+          setMetadata,
+          setPage,
+          setSearchTerm,
+          setHideAccepted,
+          acceptEntry,
+          changeTab,
+          downloadTranslatedXml,
+          exportProgressJson,
+          loadProgressJson,
+          loadXml,
+          updateEntry,
+        }),
+        [
+          activeSection,
+          categories,
+          entries,
+          isLoading,
+          metadata,
+          page,
+          searchTerm,
+          hideAccepted,
+          sections,
+          xmlDoc,
+          percent,
+          savedCount,
+          total,
+          totalPages,
+          // Actions que são estáveis (useCallback) não precisam entrar no deps array
+          // se quisermos ser puristas, mas é seguro listar.
+          acceptEntry,
+          changeTab,
+          downloadTranslatedXml,
+          exportProgressJson,
+          loadProgressJson,
+          loadXml,
+          updateEntry,
+        ],
+      );  return (
     <TranslationContext.Provider value={value}>
       {children}
     </TranslationContext.Provider>

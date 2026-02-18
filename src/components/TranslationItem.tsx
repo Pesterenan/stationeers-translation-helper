@@ -9,10 +9,11 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import type { Entry } from "../types";
 import { Badge, Grid } from "@mui/material";
+import { useTranslationContext } from "../context/TranslationContext";
 
 type Props = {
   entry: Entry;
-  index?: number; // Índice relativo à página atual (para navegação de foco)
+  index: number; // Agora obrigatório para navegação correta
   onChange: (id: string, value: string) => void;
   onAccept: (id: string) => void;
 };
@@ -95,6 +96,7 @@ const TranslationItemInner: React.FC<Props> = ({
   onAccept,
 }) => {
   const theme = useTheme();
+  const { hideAccepted } = useTranslationContext();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Use recordKey if available, otherwise fallback to parsing key or full key
@@ -133,16 +135,18 @@ const TranslationItemInner: React.FC<Props> = ({
         case "m":
           e.preventDefault();
           handleAccept();
-          if (index !== undefined) {
-            setTimeout(() => {
-              const nextElement = document.getElementById(
-                `translation-input-${index + 1}`,
-              );
-              if (nextElement) {
-                nextElement.focus();
-              }
-            }, 0);
-          }
+          
+          setTimeout(() => {
+            // Se as aceitas estão sendo escondidas, o "próximo" item agora ocupa 
+            // a posição do item atual (mesmo index). Caso contrário, pula pro próximo (+1).
+            const nextIdx = hideAccepted ? index : index + 1;
+            const nextElement = document.getElementById(
+              `translation-input-${nextIdx}`,
+            );
+            if (nextElement) {
+              nextElement.focus();
+            }
+          }, 50); // Delay curto para dar tempo de re-renderizar a lista filtrada
           break;
         case "h": {
           e.preventDefault();

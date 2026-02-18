@@ -1,6 +1,8 @@
 import React from "react";
 import {
   Button,
+  Checkbox,
+  FormControlLabel,
   Grid,
   InputAdornment,
   LinearProgress,
@@ -24,6 +26,7 @@ const ProjectToolbar: React.FC = () => {
     percent,
     savedCount,
     searchTerm,
+    hideAccepted,
     total,
     lastAutoSave,
     downloadTranslatedXml,
@@ -31,6 +34,7 @@ const ProjectToolbar: React.FC = () => {
     loadProgressJson,
     setMetadata,
     setSearchTerm,
+    setHideAccepted,
     loadXml,
   } = useTranslationContext();
 
@@ -106,8 +110,10 @@ const ProjectToolbar: React.FC = () => {
           container
           flexDirection="row"
           flexWrap="nowrap"
+          alignItems="center"
+          paddingInline={2}
         >
-          <Grid container alignItems="center" paddingInline={2}>
+          <Grid container alignItems="center" gap={2} size="auto">
             <TextField
               id="search"
               slotProps={{
@@ -121,12 +127,27 @@ const ProjectToolbar: React.FC = () => {
                   ),
                   placeholder: "Pesquisar",
                   size: "small",
-                  sx: { borderRadius: "100px" },
+                  sx: { borderRadius: "100px", width: 250 },
                 },
               }}
               onChange={(event) => setSearchText(event.currentTarget.value)}
               value={searchText}
               variant="outlined"
+            />
+            
+            <FormControlLabel
+              control={
+                <Checkbox 
+                  checked={hideAccepted} 
+                  onChange={(e) => setHideAccepted(e.target.checked)} 
+                  size="small"
+                />
+              }
+              label={
+                <Typography variant="body2" sx={{ userSelect: 'none' }}>
+                  Esconder entradas aceitas
+                </Typography>
+              }
             />
           </Grid>
            <Grid container flexDirection="column" size="grow" paddingInline={2}>
