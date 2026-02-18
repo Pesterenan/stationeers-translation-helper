@@ -253,6 +253,10 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         const obj = JSON.parse(jsonText);
         const translations: Record<string, string> = obj.translations ?? {};
 
+        if (obj.metadata) {
+          setMetadata(obj.metadata);
+        }
+
         setEntries((prev) =>
           prev.map((e) => {
             const combinedKey = `${e.section}|${e.key}`;

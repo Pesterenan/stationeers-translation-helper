@@ -138,9 +138,15 @@ export function parseStationeersXml(xmlString: string): {
 
   // 1. Extrair Metadados
   const metadata: Record<string, string | undefined> = {
-    Language: doc.querySelector("Language > Name")?.textContent ?? undefined,
-    Code: doc.querySelector("Language > Code")?.textContent ?? undefined,
-    Font: doc.querySelector("Language > Font")?.textContent ?? undefined,
+    Language:
+      (doc.querySelector("Language > Name") ?? doc.querySelector("Name"))
+        ?.textContent ?? undefined,
+    Code:
+      (doc.querySelector("Language > Code") ?? doc.querySelector("Code"))
+        ?.textContent ?? undefined,
+    Font:
+      (doc.querySelector("Language > Font") ?? doc.querySelector("Font"))
+        ?.textContent ?? undefined,
   };
 
   const root = doc.querySelector("Language");

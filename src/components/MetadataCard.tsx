@@ -29,6 +29,13 @@ const MetadataCard: React.FC<Props> = ({ metadata, onUpdate }) => {
     Font?: string;
   }>(metadata ?? {});
 
+  // Sincroniza o estado local quando os metadados vindos do context/props mudam (ex: ao carregar novo arquivo)
+  React.useEffect(() => {
+    if (metadata) {
+      setLocal(metadata);
+    }
+  }, [metadata]);
+
   const handleChange = (field: keyof typeof local, value: string) => {
     const next = { ...local, [field]: value };
     setLocal(next);
