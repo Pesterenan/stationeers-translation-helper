@@ -29,6 +29,19 @@ export default function App() {
           openDialog("GOTO_PAGE");
         }
       }
+
+      // CTRL+F (or CMD+F) to focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+        if (hasXml) {
+          e.preventDefault();
+          const searchInput = document.getElementById("search");
+          if (searchInput) {
+            searchInput.focus();
+            // Optional: select text to facilitate overwriting
+            (searchInput as HTMLInputElement).select();
+          }
+        }
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);

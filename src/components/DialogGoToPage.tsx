@@ -48,7 +48,11 @@ const DialogGoToPage = () => {
             onChange={(event) => setCurrentPage(Number(event.target.value))}
             size="small"
             slotProps={{
-              htmlInput: { min: 1, max: totalPages, tabIndex: 0 },
+              htmlInput: {
+                min: 1,
+                max: totalPages,
+                tabIndex: 0,
+              },
             }}
             type="number"
             value={currentPage > 0 ? currentPage : ""}
