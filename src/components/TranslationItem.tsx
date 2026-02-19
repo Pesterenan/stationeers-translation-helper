@@ -129,6 +129,22 @@ const TranslationItemInner: React.FC<Props> = ({
   }, [commitChange, onAccept, entry.id]);
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
+    // Tab outside last bracket to continue typing
+    if (e.key === "Tab") {
+      const input = inputRef.current;
+      if (input) {
+        const currentEnd = input.selectionEnd;
+        if (currentEnd) {
+          const lastBracket = translation.indexOf('}', currentEnd);
+          if (lastBracket !== -1) {
+            e.preventDefault();
+            input.setSelectionRange(lastBracket+1, lastBracket+1);
+            return;
+          }
+        }
+      }
+    }
+
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
         case "Enter":
