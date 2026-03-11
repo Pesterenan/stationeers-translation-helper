@@ -7,9 +7,11 @@ import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh"; // New icon for translate
 import type { Entry } from "../types";
-import { Badge, Grid } from "@mui/material";
+import { Badge, Grid, CircularProgress } from "@mui/material";
 import { useTranslationContext } from "../context/TranslationContext";
+import { translateText, mapLanguageToCode } from "../lib/translationService";
 
 type Props = {
   entry: Entry;
@@ -96,7 +98,7 @@ const TranslationItemInner: React.FC<Props> = ({
   onAccept,
 }) => {
   const theme = useTheme();
-  const { hideAccepted } = useTranslationContext();
+  const { hideAccepted, metadata } = useTranslationContext();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Use recordKey if available, otherwise fallback to parsing key or full key
@@ -105,6 +107,7 @@ const TranslationItemInner: React.FC<Props> = ({
 
   // local buffer for smooth typing
   const [translation, setTranslation] = useState(entry.translation ?? "");
+  const [isTranslating, setIsTranslating] = useState(false);
 
   // Update local state if prop changes (e.g. from JSON import)
   useEffect(() => {
@@ -128,6 +131,30 @@ const TranslationItemInner: React.FC<Props> = ({
     onAccept(entry.id);
   }, [commitChange, onAccept, entry.id]);
 
+  const handleTranslate = useCallback(async () => {
+    if (!entry.original || isTranslating) return;
+
+    setIsTranslating(true);
+    try {
+      const targetLang = mapLanguageToCode(metadata?.Language, metadata?.Code);
+      const translated = await translateText(entry.original, targetLang);
+      setTranslation(translated);
+      // Focar o campo após traduzir para que o usuário possa revisar
+      // Usamos um delay curtíssimo para garantir que o estado do TextField (disabled) já atualizou
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          // Opcional: seleciona o texto para facilitar edição rápida
+          inputRef.current.select();
+        }
+      }, 10);
+    } catch (err) {
+      console.error("Erro na tradução:", err);
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [entry.original, isTranslating, metadata?.Language, metadata?.Code]);
+
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
     // Tab outside last bracket to continue typing
     if (e.key === "Tab") {
@@ -143,6 +170,12 @@ const TranslationItemInner: React.FC<Props> = ({
           }
         }
       }
+    }
+
+    if (e.altKey && (e.key === "t" || e.key === "T")) {
+      e.preventDefault();
+      handleTranslate();
+      return;
     }
 
     if (e.ctrlKey || e.metaKey) {
@@ -362,6 +395,7 @@ const TranslationItemInner: React.FC<Props> = ({
           onBlur={commitChange}
           size="small"
           variant="outlined"
+          disabled={isTranslating} // Disable when translating
           sx={{
             "& .MuiOutlinedInput-root": {
               backgroundColor: (theme) =>
@@ -370,11 +404,16 @@ const TranslationItemInner: React.FC<Props> = ({
                   : "white",
             },
           }}
+          InputProps={{
+            endAdornment: isTranslating && (
+              <CircularProgress size={20} color="inherit" />
+            ),
+          }}
         />
       </Grid>
 
       {/* Coluna 4: Actions */}
-      <Grid paddingInline={1} size={1}>
+      <Grid paddingInline={1} size={1.5}>
         <Typography
           color="text.secondary"
           fontSize="0.65rem"
@@ -384,24 +423,39 @@ const TranslationItemInner: React.FC<Props> = ({
         >
           Ações:
         </Typography>
-        <Grid container gap={2} justifyContent="center">
+        <Grid container gap={1} justifyContent="center" flexWrap="nowrap">
+          <Tooltip title="Traduzir automaticamente (Alt+T)">
+            <Button
+              size="small"
+              onClick={handleTranslate}
+              disabled={isTranslating}
+              aria-label="traduzir"
+              sx={{ minWidth: 32, height: 32, p: 0 }}
+            >
+              {isTranslating ? (
+                <CircularProgress size={16} />
+              ) : (
+                <AutoFixHighIcon fontSize="small" />
+              )}
+            </Button>
+          </Tooltip>
           <Tooltip title="Copiar original para o campo (Ctrl+Shift+C)">
             <Button
               size="small"
               onClick={handleCopyOriginal}
               aria-label="copiar original"
-              sx={{ minWidth: 40, height: 40 }}
+              sx={{ minWidth: 32, height: 32, p: 0 }}
             >
               <ContentCopyIcon fontSize="small" />
             </Button>
           </Tooltip>
-          <Tooltip title="Aceitar (Ctrl/Cmd + Enter)">
+          <Tooltip title="Aceitar (Ctrl/Cmd + Enter ou Ctrl+M)">
             <Button
               size="small"
               variant="contained"
               onClick={handleAccept}
               color={entry.status === "saved" ? "success" : "primary"}
-              sx={{ minWidth: 40, height: 40 }}
+              sx={{ minWidth: 32, height: 32, p: 0 }}
             >
               <CheckIcon fontSize="small" />
             </Button>
