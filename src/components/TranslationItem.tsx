@@ -98,7 +98,7 @@ const TranslationItemInner: React.FC<Props> = ({
   onAccept,
 }) => {
   const theme = useTheme();
-  const { hideAccepted, metadata } = useTranslationContext();
+  const { showAccepted, metadata } = useTranslationContext();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Use recordKey if available, otherwise fallback to parsing key or full key
@@ -188,7 +188,7 @@ const TranslationItemInner: React.FC<Props> = ({
           setTimeout(() => {
             // Se as aceitas estão sendo escondidas, o "próximo" item agora ocupa 
             // a posição do item atual (mesmo index). Caso contrário, pula pro próximo (+1).
-            const nextIdx = hideAccepted ? index : index + 1;
+            const nextIdx = !showAccepted ? index : index + 1;
             const nextElement = document.getElementById(
               `translation-input-${nextIdx}`,
             );

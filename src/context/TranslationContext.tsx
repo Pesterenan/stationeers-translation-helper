@@ -29,7 +29,8 @@ interface TranslationContextType {
   metadata: IMetadata | undefined;
   page: number;
   searchTerm: string;
-  hideAccepted: boolean;
+  showAccepted: boolean;
+  showEmpty: boolean;
   sections: string[];
   xmlDoc: XMLDocument | null;
   lastAutoSave: Date | null;
@@ -44,7 +45,8 @@ interface TranslationContextType {
   setMetadata: (meta: IMetadata) => void;
   setPage: (page: number) => void;
   setSearchTerm: (term: string) => void;
-  setHideAccepted: (hide: boolean) => void;
+  setShowAccepted: (hide: boolean) => void;
+  setShowEmpty: (show: boolean) => void;
 
   // Actions
   acceptEntry: (id: string) => void;
@@ -67,7 +69,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [originalFileName, setOriginalFileName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [hideAccepted, setHideAccepted] = useState<boolean>(false);
+  const [showAccepted, setShowAccepted] = useState<boolean>(true);
+  const [showEmpty, setShowEmpty] = useState<boolean>(false);
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
 
   // Helper to get storage key
@@ -94,8 +97,11 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   
       Object.entries(groupedEntries).forEach(([section, sectionEntries]) => {
         const matches = sectionEntries.filter((entry) => {
-          // First, check hideAccepted
-          if (hideAccepted && entry.status === "saved") {
+          // First, check showAccepted
+          if (!showAccepted && entry.status === "saved") {
+            return false;
+          }
+          if (!showEmpty && entry.original.length === 0) {
             return false;
           }
   
@@ -119,7 +125,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       });
   
       return result;
-    }, [groupedEntries, searchTerm, hideAccepted]);
+    }, [groupedEntries, searchTerm, showEmpty, showAccepted]);
   
     // Pagination & Navigation
     const [page, setPage] = useState<number>(1);
@@ -242,20 +248,20 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       }, 600); // 600ms para aguardar animação da UI
     }, [getStorageKey]);
   
-    // Load mock data on development
-    useEffect(() => {
-      fetch("/mock_language.xml")
-        .then((res) => {
-          if (res.ok) return res.text();
-          throw new Error("Mock not found");
-        })
-        .then((text) => {
-          loadXml(text, "mock_language.xml");
-        })
-        .catch(() => {
-          // Silently ignore if mock is not available
-        });
-    }, [loadXml]);
+    // // Load mock data on development
+    // useEffect(() => {
+    //   fetch("/mock_language.xml")
+    //     .then((res) => {
+    //       if (res.ok) return res.text();
+    //       throw new Error("Mock not found");
+    //     })
+    //     .then((text) => {
+    //       loadXml(text, "mock_language.xml");
+    //     })
+    //     .catch(() => {
+    //       // Silently ignore if mock is not available
+    //     });
+    // }, [loadXml]);
   
     const loadProgressJson = useCallback((jsonText: string) => {
       setIsLoading(true);
@@ -398,7 +404,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           metadata,
           page,
           searchTerm,
-          hideAccepted,
+          showAccepted,
+          showEmpty,
           sections,
           xmlDoc,
           lastAutoSave,
@@ -409,7 +416,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           setMetadata,
           setPage,
           setSearchTerm,
-          setHideAccepted,
+          setShowAccepted,
+          setShowEmpty,
           acceptEntry,
           changeTab,
           downloadTranslatedXml,
@@ -426,7 +434,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           metadata,
           page,
           searchTerm,
-          hideAccepted,
+          showAccepted,
+          showEmpty,
           sections,
           xmlDoc,
           percent,

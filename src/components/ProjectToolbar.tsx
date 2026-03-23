@@ -26,7 +26,8 @@ const ProjectToolbar: React.FC = () => {
     percent,
     savedCount,
     searchTerm,
-    hideAccepted,
+    showAccepted,
+    showEmpty,
     total,
     lastAutoSave,
     downloadTranslatedXml,
@@ -34,7 +35,8 @@ const ProjectToolbar: React.FC = () => {
     loadProgressJson,
     setMetadata,
     setSearchTerm,
-    setHideAccepted,
+    setShowAccepted,
+    setShowEmpty,
     loadXml,
   } = useTranslationContext();
 
@@ -138,14 +140,28 @@ const ProjectToolbar: React.FC = () => {
             <FormControlLabel
               control={
                 <Checkbox 
-                  checked={hideAccepted} 
-                  onChange={(e) => setHideAccepted(e.target.checked)} 
+                  checked={showAccepted} 
+                  onChange={(e) => setShowAccepted(e.target.checked)} 
                   size="small"
                 />
               }
               label={
                 <Typography variant="body2" sx={{ userSelect: 'none' }}>
-                  Esconder entradas aceitas
+                  Mostrar entradas aceitas
+                </Typography>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Checkbox 
+                  checked={showEmpty} 
+                  onChange={(e) => setShowEmpty(e.target.checked)} 
+                  size="small"
+                />
+              }
+              label={
+                <Typography variant="body2" sx={{ userSelect: 'none' }}>
+                  Mostrar entradas vazias
                 </Typography>
               }
             />
