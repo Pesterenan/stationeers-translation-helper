@@ -218,6 +218,23 @@ const TranslationItemInner: React.FC<Props> = ({
           }
           break;
         }
+        // Navigate to previous/next translation item
+        case "j":
+        case "k": {
+          e.preventDefault();
+          setTimeout(() => {
+            const goToIndex = e.key === 'j' ? index + 1 : index - 1;
+            const goToElement = document.getElementById(
+              `translation-input-${goToIndex}`,
+            );
+            if (goToElement) {
+              goToElement.focus();
+            }
+          }, 50); // Delay curto para dar tempo de re-renderizar a lista filtrada
+          break;
+        }
+
+        // Tag completions:
         case "y":
         case "u":
         case "i":
@@ -441,7 +458,7 @@ const TranslationItemInner: React.FC<Props> = ({
               )}
             </Button>
           </Tooltip>
-          <Tooltip title={t('translationItem.tooltipCopy') }>
+          <Tooltip title={t('translationItem.tooltipCopy')}>
             <Button
               size="small"
               onClick={handleCopyOriginal}
