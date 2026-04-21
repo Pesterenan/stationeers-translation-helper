@@ -14,15 +14,14 @@ import {
   useTheme,
 } from "@mui/material";
 import FileImporter from "./FileImporter";
-import MetadataCard from "./MetadataCard";
-import { Search } from "@mui/icons-material";
+import { Search, Settings } from "@mui/icons-material";
 import { useTranslationContext } from "../context/TranslationContext";
+import { useUIContext } from "../context/UIContext";
 
 const ProjectToolbar: React.FC = () => {
   const {
     entries,
     xmlDoc,
-    metadata,
     percent,
     savedCount,
     searchTerm,
@@ -33,12 +32,13 @@ const ProjectToolbar: React.FC = () => {
     downloadTranslatedXml,
     exportProgressJson,
     loadProgressJson,
-    setMetadata,
     setSearchTerm,
     setShowAccepted,
     setShowEmpty,
     loadXml,
   } = useTranslationContext();
+
+  const { openDialog } = useUIContext();
 
   const theme = useTheme();
   const [searchText, setSearchText] = React.useState(searchTerm || "");
@@ -82,9 +82,15 @@ const ProjectToolbar: React.FC = () => {
             onProgressJson={loadProgressJson}
             onStart={() => {}} // Loading agora é gerenciado pelo Contexto
           />
-          {/* Metadata Editor */}
-          {metadata ? (
-            <MetadataCard metadata={metadata} onUpdate={setMetadata} />
+          {/* Metadata & Config */}
+          {hasXml ? (
+            <Button 
+              variant="outlined" 
+              startIcon={<Settings />}
+              onClick={() => openDialog("CONFIG")}
+            >
+              Configurar Projeto
+            </Button>
           ) : (
             <Grid size="grow" />
           )}

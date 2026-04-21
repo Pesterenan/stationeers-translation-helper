@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
-export type DialogType = 'GOTO_PAGE' | 'METADATA' | null;
+export type DialogType = 'GOTO_PAGE' | 'METADATA' | 'CONFIG' | null;
 
 interface UIContextType {
   activeDialog: DialogType;

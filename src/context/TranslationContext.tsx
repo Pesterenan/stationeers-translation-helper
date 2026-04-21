@@ -33,6 +33,7 @@ interface TranslationContextType {
   showEmpty: boolean;
   sections: string[];
   xmlDoc: XMLDocument | null;
+  sourceVersion: string | null;
   lastAutoSave: Date | null;
 
   // Stats
@@ -54,7 +55,8 @@ interface TranslationContextType {
   downloadTranslatedXml: () => void;
   exportProgressJson: () => void;
   loadProgressJson: (jsonText: string) => void;
-  loadXml: (text: string, fileName?: string) => void;
+  loadXml: (text: string, fileName?: string, version?: string) => void;
+  resetProject: () => void;
   updateEntry: (id: string, value: string) => void;
 }
 
@@ -65,8 +67,19 @@ const TranslationContext = createContext<TranslationContextType | undefined>(
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [xmlDoc, setXmlDoc] = useState<XMLDocument | null>(null);
-  const [metadata, setMetadata] = useState<IMetadata | undefined>(undefined);
+  const [metadata, setMetadata] = useState<IMetadata | undefined>(() => {
+    const saved = localStorage.getItem("sth_config");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  });
   const [originalFileName, setOriginalFileName] = useState<string>("");
+  const [sourceVersion, setSourceVersion] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [showAccepted, setShowAccepted] = useState<boolean>(true);
@@ -74,10 +87,21 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
 
   // Helper to get storage key
-  const getStorageKey = useCallback((lang?: string) => {
-    const suffix = lang?.toLowerCase().replace(/\s+/g, "-") || "unknown";
-    return `stationeers_draft_${suffix}`;
+  const getStorageKey = useCallback((lang?: string, code?: string) => {
+    const l = lang?.toLowerCase().replace(/\s+/g, "-").trim() || "unknown";
+    const c = code?.toLowerCase().replace(/\s+/g, "-").trim() || "";
+    const suffix = c ? `${l}_${c}` : l;
+    return `sth_draft_${suffix}`;
   }, []);
+
+  // Sync metadata to localStorage
+  useEffect(() => {
+    if (metadata) {
+      localStorage.setItem("sth_config", JSON.stringify(metadata));
+    } else {
+      localStorage.removeItem("sth_config");
+    }
+  }, [metadata]);
 
   // Group entries by section (Memoized: only re-runs when entries change)
   const groupedEntries = useMemo(() => {
@@ -182,7 +206,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           timestamp: new Date().toISOString(),
         };
   
-        localStorage.setItem(getStorageKey(metadata.Language), JSON.stringify(draftData));
+        localStorage.setItem(getStorageKey(metadata.Language, metadata.Code), JSON.stringify(draftData));
         setLastAutoSave(new Date());
       }, 3000); // Save after 3s of inactivity
   
@@ -190,27 +214,39 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     }, [entries, metadata, getStorageKey]);
   
     // Actions
-    const loadXml = useCallback((text: string, fileName?: string) => {
+    const loadXml = useCallback((text: string, fileName?: string, version?: string) => {
       setIsLoading(true);
       setTimeout(() => {
         try {
           const {
             entries: parsedEntries,
             xmlDocument,
-            metadata: meta,
+            metadata: xmlMeta,
           } = parseStationeersXml(text);
   
+          // Priority: 1. Current sth_config (manually set), 2. XML metadata
+          // If we have a Language in sth_config, we assume this is the target project.
+          const finalMeta = {
+            Language: metadata?.Language || xmlMeta.Language,
+            Code: metadata?.Code || xmlMeta.Code,
+            Font: metadata?.Font || xmlMeta.Font,
+            ExportFileName: metadata?.ExportFileName,
+          };
+
+          // Debug draft recovery
+          console.log("Tentando recuperar rascunho para:", finalMeta.Language, finalMeta.Code);
+
           // Check for existing draft in LocalStorage
-          const storageKey = getStorageKey(meta.Language || "");
+          const storageKey = getStorageKey(finalMeta.Language || "", finalMeta.Code || "");
           const savedDraft = localStorage.getItem(storageKey);
-          let draftTranslations: Record<string, string> = {};
+          let draftTranslations: Record<string, string | { translation: string, original: string }> = {};
   
           if (savedDraft) {
             try {
               const parsed = JSON.parse(savedDraft);
+              // Only load if it's the same language/code (implicit by key, but good to be safe)
               draftTranslations = parsed.translations || {};
-              // Opcional: Você pode querer avisar o usuário que um rascunho foi recuperado
-              console.log(`Rascunho para ${meta.Language} recuperado do LocalStorage.`);
+              console.log(`Rascunho para ${finalMeta.Language} recuperado do LocalStorage.`);
             } catch (e) {
               console.error("Erro ao ler rascunho do LocalStorage", e);
             }
@@ -218,13 +254,24 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   
           const initialized = parsedEntries.map((e) => {
             const combinedKey = `${e.section}|${e.key}`;
-            const savedValue = draftTranslations[combinedKey];
+            const draftEntry = draftTranslations[combinedKey];
+            
+            let savedValue: string | undefined;
+            let prevOriginal: string | undefined;
+
+            if (draftEntry) {
+              savedValue = typeof draftEntry === 'string' ? draftEntry : draftEntry.translation;
+              prevOriginal = typeof draftEntry === 'string' ? undefined : draftEntry.original;
+            }
   
+            const hasChanged = prevOriginal !== undefined && prevOriginal !== e.original;
+
             return {
               ...e,
               savedTranslation: savedValue,
               translation: savedValue || undefined,
-              status: savedValue ? ("saved" as const) : ("unchanged" as const),
+              status: hasChanged ? ("edited" as const) : (savedValue ? ("saved" as const) : ("unchanged" as const)),
+              originalAtTranslation: prevOriginal || (savedValue ? e.original : undefined),
             };
           });
   
@@ -235,13 +282,15 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   
           setEntries(initialized);
           setXmlDoc(xmlDocument);
-          setMetadata(meta);
+          setMetadata(finalMeta);
           setOriginalFileName(fileName || "");
+          setSourceVersion(version || null);
           setActiveSection(firstSection);
           setPage(1);
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Erro ao parsear XML:", err);
-          alert("Erro ao parsear XML: " + (err?.message ?? String(err)));
+          const message = err instanceof Error ? err.message : String(err);
+          alert("Erro ao parsear XML: " + message);
         } finally {
           setIsLoading(false);
         }
@@ -268,32 +317,41 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       setTimeout(() => {
         try {
           const obj = JSON.parse(jsonText);
-          const translations: Record<string, string> = obj.translations ?? {};
+          const translations: Record<string, string | { translation: string, original: string }> = obj.translations ?? {};
   
           if (obj.metadata) {
             setMetadata(obj.metadata);
           }
-  
+
           setEntries((prev) =>
             prev.map((e) => {
               const combinedKey = `${e.section}|${e.key}`;
-              const saved = translations[combinedKey];
-  
-              if (saved != null) {
+              const progressEntry = translations[combinedKey];
+
+              if (progressEntry != null) {
+                // Support both old and new formats
+                const saved = typeof progressEntry === 'string' ? progressEntry : progressEntry.translation;
+                const prevOriginal = typeof progressEntry === 'string' ? undefined : progressEntry.original;
+
+                // Detect if original text changed
+                const hasChanged = prevOriginal !== undefined && prevOriginal !== e.original;
+
                 return {
                   ...e,
                   savedTranslation: saved,
                   translation: saved,
-                  status: saved ? "saved" : "unchanged",
+                  status: hasChanged ? ("edited" as const) : (saved ? ("saved" as const) : ("unchanged" as const)),
+                  originalAtTranslation: prevOriginal || (saved ? e.original : undefined)
                 };
               }
               return e;
             }),
           );
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
           console.error("Erro ao importar progresso JSON:", err);
           alert(
-            "Erro ao importar progresso JSON: " + (err?.message ?? String(err)),
+            "Erro ao importar progresso JSON: " + message,
           );
         } finally {
           setIsLoading(false);
@@ -314,16 +372,20 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     }, []);
   
     const exportProgressJson = useCallback(() => {
-      const translations = entries.reduce<Record<string, string>>((acc, e) => {
+      const translations = entries.reduce<Record<string, { translation: string, original: string }>>((acc, e) => {
         if (e.savedTranslation) {
           const exportKey = `${e.section}|${e.key}`;
-          acc[exportKey] = e.savedTranslation;
+          acc[exportKey] = {
+            translation: e.savedTranslation,
+            original: e.original // Save the original text to detect changes later
+          };
         }
         return acc;
       }, {});
   
       const exportData = {
         metadata,
+        sourceVersion,
         timestamp: new Date().toISOString(),
         translations,
       };
@@ -348,7 +410,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         JSON.stringify(exportData, null, 2),
         "application/json;charset=utf-8",
       );
-    }, [entries, metadata, originalFileName]);
+    }, [entries, metadata, originalFileName, sourceVersion]);
   
     const downloadTranslatedXml = useCallback(() => {
       if (!xmlDoc) return alert("Nenhum XML carregado");
@@ -363,27 +425,30 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           }
           const xml = buildTranslatedStationeersXml(docToUse, entries);
   
-          let fileName = "translated.xml";
-          if (originalFileName) {
-            const parts = originalFileName.split(".");
-            if (parts.length > 1) {
-              parts.pop(); // Remove extension
-              fileName = `${parts.join(".")}_translated.xml`;
+          let fileName = metadata?.ExportFileName || "translated.xml";
+          if (!metadata?.ExportFileName) {
+            if (originalFileName) {
+              const parts = originalFileName.split(".");
+              if (parts.length > 1) {
+                parts.pop(); // Remove extension
+                fileName = `${parts.join(".")}_translated.xml`;
+              } else {
+                fileName = `${originalFileName}_translated.xml`;
+              }
             } else {
-              fileName = `${originalFileName}_translated.xml`;
+              const langName = metadata?.Language?.toLocaleLowerCase().replaceAll(
+                / /g,
+                "-",
+              );
+              if (langName) fileName = `${langName}.xml`;
             }
-          } else {
-            const langName = metadata?.Language?.toLocaleLowerCase().replaceAll(
-              / /g,
-              "-",
-            );
-            if (langName) fileName = `${langName}.xml`;
           }
   
           downloadFile(fileName, xml, "text/xml;charset=utf-8");
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Erro ao gerar XML traduzido:", err);
-          alert("Erro ao gerar XML traduzido: " + (err?.message ?? String(err)));
+          const message = err instanceof Error ? err.message : String(err);
+          alert("Erro ao gerar XML traduzido: " + message);
         } finally {
           setIsLoading(false);
         }
@@ -394,7 +459,19 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       setActiveSection(newValue);
       setPage(1);
     }, []);
-  
+
+    const resetProject = useCallback(() => {
+      if (confirm("Isso irá limpar as configurações do idioma e o arquivo carregado. Deseja continuar?")) {
+        setEntries([]);
+        setXmlDoc(null);
+        setMetadata(undefined);
+        setOriginalFileName("");
+        setSourceVersion(null);
+        setPage(1);
+        setActiveSection("");
+      }
+    }, []);
+
       const value = useMemo(
         () => ({
           activeSection,
@@ -408,6 +485,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           showEmpty,
           sections,
           xmlDoc,
+          sourceVersion,
           lastAutoSave,
           percent,
           savedCount,
@@ -424,6 +502,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           exportProgressJson,
           loadProgressJson,
           loadXml,
+          resetProject,
           updateEntry,
         }),
         [
@@ -438,6 +517,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           showEmpty,
           sections,
           xmlDoc,
+          sourceVersion,
+          lastAutoSave,
           percent,
           savedCount,
           total,
@@ -450,9 +531,11 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           exportProgressJson,
           loadProgressJson,
           loadXml,
+          resetProject,
           updateEntry,
         ],
-      );  return (
+      );
+  return (
     <TranslationContext.Provider value={value}>
       {children}
     </TranslationContext.Provider>

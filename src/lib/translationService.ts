@@ -55,7 +55,7 @@ export async function translateText(text: string, targetLang: string = "pt"): Pr
     // Google Translate returns an array of segments in data[0]
     // Each segment is [translatedText, originalText, ...]
     if (data && data[0]) {
-      return data[0].map((segment: any[]) => segment[0]).join("");
+      return data[0].map((segment: unknown[]) => (segment[0] as string) || "").join("");
     }
 
     return "";

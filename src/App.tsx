@@ -6,6 +6,7 @@ import TranslationsList from "./components/TranslationsList";
 import ProjectToolbar from "./components/ProjectToolbar";
 import SectionTabs from "./components/SectionTabs";
 import DialogGoToPage from "./components/DialogGoToPage";
+import DialogConfig from "./components/DialogConfig";
 
 import { useTranslationContext } from "./context/TranslationContext";
 import { useUIContext } from "./context/UIContext";
@@ -58,6 +59,7 @@ export default function App() {
     >
       {/* Diálogos Globais */}
       <DialogGoToPage />
+      <DialogConfig />
 
       {/* Header & Toolbar Section */}
       <Grid

@@ -25,6 +25,10 @@ export interface Entry {
   /** A tradução confirmada/salva (estado 'saved'). */
   savedTranslation?: string;
   
+  /** O texto original no momento em que a tradução foi salva. 
+   * Usado para detectar se o arquivo original (English) mudou. */
+  originalAtTranslation?: string;
+
   status?: EntryStatus;
 
   /** A seção do XML onde este registro se encontra (ex: "Things", "Reagents", "HelpPage"). */
@@ -45,6 +49,7 @@ export interface IMetadata {
   Language?: string;
   Code?: string;
   Font?: string;
+  ExportFileName?: string;
 }
 
 // Definições de estruturas conhecidas do XML para referência e tipagem futura

@@ -3,7 +3,7 @@ import Button from "@mui/material/Button";
 import { readFileAsText } from "../lib/fileHelpers";
 
 type Props = {
-  onXml: (fileText: string, fileName?: string) => void;
+  onXml: (fileText: string, fileName?: string, version?: string) => void;
   onProgressJson: (jsonText: string) => void;
   onStart?: () => void;
 };
@@ -18,12 +18,20 @@ const FileImporter: React.FC<Props> = ({ onXml, onProgressJson, onStart }) => {
 
     const text = await readFileAsText(file);
     const name = file.name.toLowerCase();
+
+    // Validação de prefixo: apenas arquivos que começam com 'english' são permitidos
+    if (!name.startsWith('english')) {
+      alert("Apenas arquivos originais do jogo (começando com 'english') ou arquivos de progresso 'english_progress.json' são permitidos.");
+      e.target.value = "";
+      return;
+    }
+
     const isJson = name.endsWith('.json') || name.endsWith('.progress') || file.type === 'application/json';
     const isXml = name.endsWith('.xml') || file.type === 'text/xml';
     if (isJson) { 
       onProgressJson(text)
     } else if (isXml) { 
-      onXml(text, file.name)
+      onXml(text, file.name, file.lastModified.toString())
     } else {
       // fallback: tentar detectar conteúdo
       try {
