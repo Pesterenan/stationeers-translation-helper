@@ -18,6 +18,8 @@ import {
   updateTranslation as updateTranslationHelper,
   acceptTranslation,
 } from "../lib/entryHelpers";
+import { useI18n } from "./I18nContext";
+import { locales } from "../locales";
 
 // Definição do Tipo do Contexto
 interface TranslationContextType {
@@ -65,6 +67,7 @@ const TranslationContext = createContext<TranslationContextType | undefined>(
 );
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
+  const { t, locale } = useI18n();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [xmlDoc, setXmlDoc] = useState<XMLDocument | null>(null);
   const [metadata, setMetadata] = useState<IMetadata | undefined>(() => {
@@ -246,7 +249,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
               const parsed = JSON.parse(savedDraft);
               // Only load if it's the same language/code (implicit by key, but good to be safe)
               draftTranslations = parsed.translations || {};
-              console.log(`Rascunho para ${finalMeta.Language} recuperado do LocalStorage.`);
+              console.log(t('messages.draftRecovered', { lang: finalMeta.Language || "" }));
             } catch (e) {
               console.error("Erro ao ler rascunho do LocalStorage", e);
             }
@@ -287,15 +290,16 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           setSourceVersion(version || null);
           setActiveSection(firstSection);
           setPage(1);
-        } catch (err: unknown) {
-          console.error("Erro ao parsear XML:", err);
+          } catch (err: unknown) {
+          console.error(t('messages.xmlError'), err);
           const message = err instanceof Error ? err.message : String(err);
-          alert("Erro ao parsear XML: " + message);
-        } finally {
+          alert(t('messages.xmlError') + " " + message);
+          } finally {
           setIsLoading(false);
-        }
-      }, 600); // 600ms para aguardar animação da UI
-    }, [getStorageKey]);
+          }
+          }, 600); // 600ms para aguardar animação da UI
+          }, [getStorageKey, metadata, t]);
+
   
     // // Load mock data on development
     // useEffect(() => {
@@ -349,15 +353,15 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           );
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : String(err);
-          console.error("Erro ao importar progresso JSON:", err);
+          console.error(t('messages.jsonError'), err);
           alert(
-            "Erro ao importar progresso JSON: " + message,
+            t('messages.jsonError') + " " + message,
           );
         } finally {
           setIsLoading(false);
         }
       }, 600);
-    }, []);
+    }, [t]);
   
     const updateEntry = useCallback((id: string, value: string) => {
       setEntries((prev) =>
@@ -413,7 +417,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     }, [entries, metadata, originalFileName, sourceVersion]);
   
     const downloadTranslatedXml = useCallback(() => {
-      if (!xmlDoc) return alert("Nenhum XML carregado");
+      if (!xmlDoc) return alert(t('messages.noXml'));
       setIsLoading(true);
       setTimeout(() => {
         try {
@@ -446,14 +450,14 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   
           downloadFile(fileName, xml, "text/xml;charset=utf-8");
         } catch (err: unknown) {
-          console.error("Erro ao gerar XML traduzido:", err);
+          console.error(t('messages.exportError'), err);
           const message = err instanceof Error ? err.message : String(err);
-          alert("Erro ao gerar XML traduzido: " + message);
+          alert(t('messages.exportError') + " " + message);
         } finally {
           setIsLoading(false);
         }
       }, 600);
-    }, [xmlDoc, metadata, entries, originalFileName]);
+    }, [xmlDoc, metadata, entries, originalFileName, t]);
   
     const changeTab = useCallback((newValue: string) => {
       setActiveSection(newValue);
@@ -461,7 +465,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const resetProject = useCallback(() => {
-      if (confirm("Isso irá limpar as configurações do idioma e o arquivo carregado. Deseja continuar?")) {
+      if (confirm(t('messages.confirmReset'))) {
         setEntries([]);
         setXmlDoc(null);
         setMetadata(undefined);
@@ -470,7 +474,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         setPage(1);
         setActiveSection("");
       }
-    }, []);
+    }, [t]);
 
       const value = useMemo(
         () => ({

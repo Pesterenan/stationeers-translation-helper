@@ -10,11 +10,13 @@ import DialogConfig from "./components/DialogConfig";
 
 import { useTranslationContext } from "./context/TranslationContext";
 import { useUIContext } from "./context/UIContext";
+import { useI18n } from "./context/I18nContext";
 
 export default function App() {
   const { totalPages, xmlDoc, isLoading, page, setPage } =
     useTranslationContext();
   const { openDialog } = useUIContext();
+  const { t } = useI18n();
 
   const hasXml = !!xmlDoc;
   const showContent = hasXml || isLoading;
@@ -93,7 +95,7 @@ export default function App() {
             fontWeight="bold"
             sx={{ transition: "font-size 0.6s ease-in-out" }}
           >
-            Stationeers Translation Helper
+            {t('app.title')}
           </Typography>
           <Grid
             sx={{
@@ -104,8 +106,7 @@ export default function App() {
             }}
           >
             <Typography variant="body1" color="text.secondary">
-              Importe o arquivo XML original do jogo, edite as traduções e
-              exporte o novo XML
+              {t('app.subtitle')}
             </Typography>
           </Grid>
         </Grid>
@@ -146,7 +147,7 @@ export default function App() {
                 >
                   <CircularProgress />
                   <Typography variant="h6" color="text.secondary">
-                    Processando arquivo...
+                    {t('app.loading')}
                   </Typography>
                 </Grid>
               </Grid>

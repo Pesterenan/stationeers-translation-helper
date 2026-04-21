@@ -1,6 +1,7 @@
 import React,  { type ChangeEvent } from "react";
 import Button from "@mui/material/Button";
 import { readFileAsText } from "../lib/fileHelpers";
+import { useI18n } from "../context/I18nContext";
 
 type Props = {
   onXml: (fileText: string, fileName?: string, version?: string) => void;
@@ -9,6 +10,7 @@ type Props = {
 };
 
 const FileImporter: React.FC<Props> = ({ onXml, onProgressJson, onStart }) => {
+  const { t } = useI18n();
   const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -21,7 +23,7 @@ const FileImporter: React.FC<Props> = ({ onXml, onProgressJson, onStart }) => {
 
     // Validação de prefixo: apenas arquivos que começam com 'english' são permitidos
     if (!name.startsWith('english')) {
-      alert("Apenas arquivos originais do jogo (começando com 'english') ou arquivos de progresso 'english_progress.json' são permitidos.");
+      alert(t('importer.errorPrefix'));
       e.target.value = "";
       return;
     }
@@ -39,10 +41,10 @@ const FileImporter: React.FC<Props> = ({ onXml, onProgressJson, onStart }) => {
         if (parsed && typeof parsed === "object") {
           onProgressJson(text);
         } else {
-          alert("Tipo de arquivo desconhecido.");
+          alert(t('importer.errorUnknown'));
         }
       } catch {
-        alert("Tipo de arquivo desconhecido. Use .xml ou .json");
+        alert(t('importer.errorUnknown'));
       }
     }
     // limpar input para permitir re-upload do mesmo arquivo
@@ -52,9 +54,10 @@ const FileImporter: React.FC<Props> = ({ onXml, onProgressJson, onStart }) => {
   return (
     <label>
       <input type="file" accept=".xml,.json,application/xml,application/json" onChange={handleFile} style={{ display: "none" }} />
-      <Button variant="outlined" component="span">Importar XML / JSON</Button>
+      <Button variant="outlined" component="span">{t('toolbar.import')}</Button>
     </label>
   );
 };
+
 
 export default FileImporter;

@@ -17,6 +17,7 @@ import FileImporter from "./FileImporter";
 import { Search, Settings } from "@mui/icons-material";
 import { useTranslationContext } from "../context/TranslationContext";
 import { useUIContext } from "../context/UIContext";
+import { useI18n } from "../context/I18nContext";
 
 const ProjectToolbar: React.FC = () => {
   const {
@@ -39,6 +40,7 @@ const ProjectToolbar: React.FC = () => {
   } = useTranslationContext();
 
   const { openDialog } = useUIContext();
+  const { t } = useI18n();
 
   const theme = useTheme();
   const [searchText, setSearchText] = React.useState(searchTerm || "");
@@ -89,7 +91,7 @@ const ProjectToolbar: React.FC = () => {
               startIcon={<Settings />}
               onClick={() => openDialog("CONFIG")}
             >
-              Configurar Projeto
+              {t('toolbar.settings')}
             </Button>
           ) : (
             <Grid size="grow" />
@@ -100,14 +102,14 @@ const ProjectToolbar: React.FC = () => {
             onClick={exportProgressJson}
             disabled={entriesCount === 0}
           >
-            Salvar Progresso
+            {t('toolbar.saveProgress')}
           </Button>
           <Button
             variant="contained"
             onClick={downloadTranslatedXml}
             disabled={!hasXml}
           >
-            Baixar XML
+            {t('toolbar.downloadXml')}
           </Button>
         </Grid>
       </Paper>
@@ -128,12 +130,12 @@ const ProjectToolbar: React.FC = () => {
                 input: {
                   endAdornment: (
                     <InputAdornment position="end">
-                      <Tooltip title="Digite mais que 3 letras do que está procurando para pesquisar">
+                      <Tooltip title={t('toolbar.searchTooltip')}>
                         <Search />
                       </Tooltip>
                     </InputAdornment>
                   ),
-                  placeholder: "Pesquisar",
+                  placeholder: t('toolbar.searchPlaceholder'),
                   size: "small",
                   sx: { borderRadius: "100px", width: 250 },
                 },
@@ -153,7 +155,7 @@ const ProjectToolbar: React.FC = () => {
               }
               label={
                 <Typography variant="body2" sx={{ userSelect: 'none' }}>
-                  Mostrar entradas aceitas
+                  {t('toolbar.showAccepted')}
                 </Typography>
               }
             />
@@ -167,7 +169,7 @@ const ProjectToolbar: React.FC = () => {
               }
               label={
                 <Typography variant="body2" sx={{ userSelect: 'none' }}>
-                  Mostrar entradas vazias
+                  {t('toolbar.showEmpty')}
                 </Typography>
               }
             />
@@ -175,7 +177,7 @@ const ProjectToolbar: React.FC = () => {
            <Grid container flexDirection="column" size="grow" paddingInline={2}>
             <Grid container flexDirection="row" justifyContent="space-between">
               <Typography variant="caption" fontWeight="bold">
-                Progresso Total
+                {t('toolbar.totalProgress')}
               </Typography>
               <Typography variant="caption">
                 {savedCount} / {total} ({percent}%)
@@ -193,7 +195,7 @@ const ProjectToolbar: React.FC = () => {
             />
             {lastAutoSave && (
               <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'flex-end', mt: 0.5, fontSize: '0.6rem' }}>
-                Rascunho salvo às {lastAutoSave.toLocaleTimeString()}
+                {t('toolbar.draftSaved')} {lastAutoSave.toLocaleTimeString()}
               </Typography>
             )}
           </Grid>

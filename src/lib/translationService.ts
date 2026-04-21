@@ -6,8 +6,8 @@
 const LANGUAGE_MAP: Record<string, string> = {
   "portuguese": "pt-PT",
   "português": "pt-PT",
-  "brazilian-portuguese": "pt-BR",
-  "português brasileiro": "pt-BR",
+  "brazilian-portuguese": "pb",
+  "português brasileiro": "pb",
   "spanish": "es",
   "español": "es",
   "german": "de",
@@ -30,7 +30,7 @@ export function mapLanguageToCode(langName: string | undefined, langCode: string
   // Try code first (e.g., "PT", "EN", "ES")
   if (langCode) {
     const code = langCode.toLowerCase().trim();
-    if (code === "pt-br" || code === "pb") return "pt-BR";
+    if (code === "pt-br" || code === "pb") return "pb";
     return code;
   }
 

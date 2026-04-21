@@ -10,10 +10,12 @@ import {
 import * as React from "react";
 import { useTranslationContext } from "../context/TranslationContext";
 import { useUIContext } from "../context/UIContext";
+import { useI18n } from "../context/I18nContext";
 
 const DialogGoToPage = () => {
   const { activeDialog, closeDialog } = useUIContext();
   const { page, setPage, totalPages } = useTranslationContext();
+  const { t } = useI18n();
   const [currentPage, setCurrentPage] = React.useState(page);
 
   const isOpen = activeDialog === "GOTO_PAGE";
@@ -41,7 +43,7 @@ const DialogGoToPage = () => {
     <Dialog open={isOpen} onClose={closeDialog}>
       <DialogContent onKeyDown={handleKeyDown}>
         <Grid alignItems="center" container flexWrap="nowrap" gap={2}>
-          <Typography sx={{ whiteSpace: "nowrap" }}>Ir para página:</Typography>
+          <Typography sx={{ whiteSpace: "nowrap" }}>{t('dialogGoToPage.title')}</Typography>
           <TextField
             autoFocus
             margin="none"
@@ -58,13 +60,13 @@ const DialogGoToPage = () => {
             value={currentPage > 0 ? currentPage : ""}
           />
           <Typography color="text.secondary" variant="body2">
-            de {totalPages}
+            {t('dialogGoToPage.of')} {totalPages}
           </Typography>
         </Grid>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={closeDialog} tabIndex={2}>
-          Cancelar
+          {t('dialogGoToPage.cancel')}
         </Button>
         <Button
           color="success"
@@ -73,7 +75,7 @@ const DialogGoToPage = () => {
           tabIndex={1}
           variant="contained"
         >
-          Ir
+          {t('dialogGoToPage.go')}
         </Button>
       </DialogActions>
     </Dialog>

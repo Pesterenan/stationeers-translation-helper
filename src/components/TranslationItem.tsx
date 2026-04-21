@@ -12,6 +12,7 @@ import type { Entry } from "../types";
 import { Badge, Grid, CircularProgress } from "@mui/material";
 import { useTranslationContext } from "../context/TranslationContext";
 import { translateText, mapLanguageToCode } from "../lib/translationService";
+import { useI18n } from "../context/I18nContext";
 
 type Props = {
   entry: Entry;
@@ -97,6 +98,7 @@ const TranslationItemInner: React.FC<Props> = ({
   onChange,
   onAccept,
 }) => {
+  const { t } = useI18n();
   const theme = useTheme();
   const { showAccepted, metadata } = useTranslationContext();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -165,7 +167,7 @@ const TranslationItemInner: React.FC<Props> = ({
           const lastBracket = translation.indexOf('}', currentEnd);
           if (lastBracket !== -1) {
             e.preventDefault();
-            input.setSelectionRange(lastBracket+1, lastBracket+1);
+            input.setSelectionRange(lastBracket + 1, lastBracket + 1);
             return;
           }
         }
@@ -184,7 +186,7 @@ const TranslationItemInner: React.FC<Props> = ({
         case "m":
           e.preventDefault();
           handleAccept();
-          
+
           setTimeout(() => {
             // Se as aceitas estão sendo escondidas, o "próximo" item agora ocupa 
             // a posição do item atual (mesmo index). Caso contrário, pula pro próximo (+1).
@@ -293,14 +295,14 @@ const TranslationItemInner: React.FC<Props> = ({
   const backgroundColor =
     entry.status === "edited"
       ? alpha(
-          theme.palette.warning.main,
-          theme.palette.mode === "dark" ? 0.16 : 0.12,
-        )
+        theme.palette.warning.main,
+        theme.palette.mode === "dark" ? 0.16 : 0.12,
+      )
       : entry.status === "saved"
         ? alpha(
-            theme.palette.success.main,
-            theme.palette.mode === "dark" ? 0.16 : 0.12,
-          )
+          theme.palette.success.main,
+          theme.palette.mode === "dark" ? 0.16 : 0.12,
+        )
         : "transparent";
 
   return (
@@ -323,7 +325,7 @@ const TranslationItemInner: React.FC<Props> = ({
           textTransform="uppercase"
           variant="caption"
         >
-          Chave:
+          {t('translationItem.key')}
         </Typography>
         <Grid container justifyContent="space-between">
           <Typography
@@ -362,7 +364,7 @@ const TranslationItemInner: React.FC<Props> = ({
           textTransform="uppercase"
           variant="caption"
         >
-          Original:
+          {t('translationItem.original')}
         </Typography>
         <OriginalTextDisplay
           id={index !== undefined ? `original-text-${index}` : undefined}
@@ -380,7 +382,7 @@ const TranslationItemInner: React.FC<Props> = ({
           textTransform="uppercase"
           variant="caption"
         >
-          Tradução:
+          {t('translationItem.translation')}
         </Typography>
         <TextField
           id={index !== undefined ? `translation-input-${index}` : undefined}
@@ -421,10 +423,10 @@ const TranslationItemInner: React.FC<Props> = ({
           textTransform="uppercase"
           variant="caption"
         >
-          Ações:
+          {t('translationItem.actions')}
         </Typography>
         <Grid container gap={1} justifyContent="center" flexWrap="nowrap">
-          <Tooltip title="Traduzir automaticamente (Alt+T)">
+          <Tooltip title={t('translationItem.tooltipTranslate')}>
             <Button
               size="small"
               onClick={handleTranslate}
@@ -439,7 +441,7 @@ const TranslationItemInner: React.FC<Props> = ({
               )}
             </Button>
           </Tooltip>
-          <Tooltip title="Copiar original para o campo (Ctrl+Shift+C)">
+          <Tooltip title={t('translationItem.tooltipCopy') }>
             <Button
               size="small"
               onClick={handleCopyOriginal}
@@ -449,7 +451,7 @@ const TranslationItemInner: React.FC<Props> = ({
               <ContentCopyIcon fontSize="small" />
             </Button>
           </Tooltip>
-          <Tooltip title="Aceitar (Ctrl/Cmd + Enter ou Ctrl+M)">
+          <Tooltip title={t('translationItem.tooltipAccept')}>
             <Button
               size="small"
               variant="contained"

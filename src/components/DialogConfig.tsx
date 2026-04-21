@@ -16,6 +16,9 @@ import type { SelectChangeEvent } from "@mui/material";
 import * as React from "react";
 import { useTranslationContext } from "../context/TranslationContext";
 import { useUIContext } from "../context/UIContext";
+import { useI18n } from "../context/I18nContext";
+import { locales } from "../locales";
+import type { LocaleKey } from "../locales";
 
 const FONT_OPTIONS = [
   { value: "font_english", label: "English (Latin Padrão)" },
@@ -27,6 +30,7 @@ const FONT_OPTIONS = [
 const DialogConfig = () => {
   const { activeDialog, closeDialog } = useUIContext();
   const { metadata, setMetadata, resetProject } = useTranslationContext();
+  const { t, locale, changeLanguage } = useI18n();
 
   const [localMeta, setLocalMeta] = React.useState({
     Language: "",
@@ -63,34 +67,50 @@ const DialogConfig = () => {
 
   return (
     <Dialog open={isOpen} onClose={closeDialog} fullWidth maxWidth="sm">
-      <DialogTitle>Configurações do Projeto</DialogTitle>
+      <DialogTitle>{t('dialogConfig.title')}</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ mt: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            Ajuste os metadados do arquivo XML e as configurações de exportação.
+            {t('dialogConfig.description')}
           </Typography>
 
+          <FormControl fullWidth>
+            <InputLabel id="config-ui-lang-select-label">{t('dialogConfig.uiLanguageLabel')}</InputLabel>
+            <Select
+              labelId="config-ui-lang-select-label"
+              value={locale}
+              label={t('dialogConfig.uiLanguageLabel')}
+              onChange={(e) => changeLanguage(e.target.value as LocaleKey)}
+            >
+              {Object.entries(locales).map(([key, dict]) => (
+                <MenuItem key={key} value={key}>
+                  {(dict as any).label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <TextField
-            label="Nome do Idioma (Ex: Portuguese)"
+            label={t('dialogConfig.languageLabel')}
             fullWidth
             value={localMeta.Language}
             onChange={handleChange("Language")}
             placeholder="Ex: Portuguese"
           />
           <TextField
-            label="Código do Idioma (Ex: pt-BR)"
+            label={t('dialogConfig.codeLabel')}
             fullWidth
             value={localMeta.Code}
             onChange={handleChange("Code")}
-            placeholder="Ex: pt-BR"
+            placeholder="Ex: pb"
           />
           
           <FormControl fullWidth>
-            <InputLabel id="config-font-select-label">Fonte (Conjunto de Caracteres)</InputLabel>
+            <InputLabel id="config-font-select-label">{t('dialogConfig.fontLabel')}</InputLabel>
             <Select
               labelId="config-font-select-label"
               value={localMeta.Font}
-              label="Fonte (Conjunto de Caracteres)"
+              label={t('dialogConfig.fontLabel')}
               onChange={handleFontChange}
             >
               {FONT_OPTIONS.map((opt) => (
@@ -102,11 +122,11 @@ const DialogConfig = () => {
           </FormControl>
 
           <TextField
-            label="Nome do Arquivo Exportado (Ex: portuguese.xml)"
+            label={t('dialogConfig.exportFileLabel')}
             fullWidth
             value={localMeta.ExportFileName}
             onChange={handleChange("ExportFileName")}
-            helperText="Se vazio, usará o nome padrão baseado no idioma."
+            helperText={t('dialogConfig.exportFileHelper')}
             placeholder="Ex: portuguese.xml"
           />
         </Stack>
@@ -117,17 +137,17 @@ const DialogConfig = () => {
           onClick={() => { resetProject(); closeDialog(); }}
           sx={{ mr: "auto" }}
         >
-          Resetar Projeto
+          {t('dialogConfig.resetProject')}
         </Button>
         <Button onClick={closeDialog}>
-          Cancelar
+          {t('dialogConfig.cancel')}
         </Button>
         <Button
           color="primary"
           onClick={handleSave}
           variant="contained"
         >
-          Salvar Configurações
+          {t('dialogConfig.save')}
         </Button>
       </DialogActions>
     </Dialog>
