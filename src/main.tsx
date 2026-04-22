@@ -3,9 +3,9 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
-import { TranslationProvider } from "./context/TranslationContext.tsx";
-import { UIProvider } from "./context/UIContext.tsx";
-import { I18nProvider } from "./context/I18nContext.tsx";
+import { TranslationProvider } from "./context/TranslationProvider.tsx";
+import { DialogProvider } from "./context/DialogProvider.tsx";
+import { I18nProvider } from "./context/I18nProvider.tsx";
 
 const theme = createTheme({
   palette: { mode: "dark" },
@@ -17,9 +17,9 @@ createRoot(document.getElementById("root")!).render(
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <TranslationProvider>
-          <UIProvider>
+          <DialogProvider>
             <App />
-          </UIProvider>
+          </DialogProvider>
         </TranslationProvider>
       </ThemeProvider>
     </I18nProvider>

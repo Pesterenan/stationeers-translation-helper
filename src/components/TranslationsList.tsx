@@ -1,8 +1,7 @@
 import React, { useMemo } from "react";
 import Grid from "@mui/material/Grid";
 import TranslationItem from "./TranslationItem";
-import { useTranslationContext } from "../context/TranslationContext";
-import DialogGoToPage from "./DialogGoToPage";
+import { useTranslationContext } from "../context/useTranslationContext";
 
 const TranslationsList: React.FC = () => {
   const { categories, activeSection, page, updateEntry, acceptEntry } =
@@ -19,11 +18,10 @@ const TranslationsList: React.FC = () => {
 
   return (
     <Grid container direction="column" wrap="nowrap">
-      <DialogGoToPage />
       {slice.map((e, idx) => (
         <Grid
           key={e.id}
-          sx={{ 
+          sx={{
             width: "100%",
             borderBottom: "1px solid",
             borderColor: "divider",

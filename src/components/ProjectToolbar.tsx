@@ -15,9 +15,9 @@ import {
 } from "@mui/material";
 import FileImporter from "./FileImporter";
 import { Search, Settings } from "@mui/icons-material";
-import { useTranslationContext } from "../context/TranslationContext";
-import { useUIContext } from "../context/UIContext";
-import { useI18n } from "../context/I18nContext";
+import { useDialogContext } from "../context/useDialogContext";
+import { useI18nContext } from "../context/useI18nContext";
+import { useTranslationContext } from "../context/useTranslationContext";
 
 const ProjectToolbar: React.FC = () => {
   const {
@@ -39,8 +39,8 @@ const ProjectToolbar: React.FC = () => {
     loadXml,
   } = useTranslationContext();
 
-  const { openDialog } = useUIContext();
-  const { t } = useI18n();
+  const { openDialog } = useDialogContext();
+  const { t } = useI18nContext();
 
   const theme = useTheme();
   const [searchText, setSearchText] = React.useState(searchTerm || "");

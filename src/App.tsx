@@ -5,18 +5,18 @@ import { CircularProgress, Grid, Pagination, Paper } from "@mui/material";
 import TranslationsList from "./components/TranslationsList";
 import ProjectToolbar from "./components/ProjectToolbar";
 import SectionTabs from "./components/SectionTabs";
-import DialogGoToPage from "./components/DialogGoToPage";
-import DialogConfig from "./components/DialogConfig";
+import DialogGoToPage from "./components/dialogs/DialogGoToPage";
+import DialogConfig from "./components/dialogs/DialogConfig";
 
-import { useTranslationContext } from "./context/TranslationContext";
-import { useUIContext } from "./context/UIContext";
-import { useI18n } from "./context/I18nContext";
+import { useDialogContext } from "./context/useDialogContext";
+import { useTranslationContext } from "./context/useTranslationContext";
+import { useI18nContext } from "./context/useI18nContext";
 
 export default function App() {
   const { totalPages, xmlDoc, isLoading, page, setPage } =
     useTranslationContext();
-  const { openDialog } = useUIContext();
-  const { t } = useI18n();
+  const { openDialog } = useDialogContext();
+  const { t } = useI18nContext();
 
   const hasXml = !!xmlDoc;
   const showContent = hasXml || isLoading;

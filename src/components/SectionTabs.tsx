@@ -1,6 +1,6 @@
 import React from "react";
 import { Paper, Tabs, Tab, Box, Chip } from "@mui/material";
-import { useTranslationContext } from "../context/TranslationContext";
+import { useTranslationContext } from "../context/useTranslationContext";
 
 const SectionTabs: React.FC = () => {
   const { activeSection, categories, sections, changeTab } =

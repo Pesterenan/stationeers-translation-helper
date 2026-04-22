@@ -8,14 +8,14 @@ import {
   Typography,
 } from "@mui/material";
 import * as React from "react";
-import { useTranslationContext } from "../context/TranslationContext";
-import { useUIContext } from "../context/UIContext";
-import { useI18n } from "../context/I18nContext";
+import { useDialogContext } from "../../context/useDialogContext";
+import { useTranslationContext } from "../../context/useTranslationContext";
+import { useI18nContext } from "../../context/useI18nContext";
 
 const DialogGoToPage = () => {
-  const { activeDialog, closeDialog } = useUIContext();
+  const { activeDialog, closeDialog } = useDialogContext();
   const { page, setPage, totalPages } = useTranslationContext();
-  const { t } = useI18n();
+  const { t } = useI18nContext();
   const [currentPage, setCurrentPage] = React.useState(page);
 
   const isOpen = activeDialog === "GOTO_PAGE";

@@ -10,9 +10,9 @@ import CheckIcon from "@mui/icons-material/Check";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh"; // New icon for translate
 import type { Entry } from "../types";
 import { Badge, Grid, CircularProgress } from "@mui/material";
-import { useTranslationContext } from "../context/TranslationContext";
 import { translateText, mapLanguageToCode } from "../lib/translationService";
-import { useI18n } from "../context/I18nContext";
+import { useI18nContext } from "../context/useI18nContext";
+import { useTranslationContext } from "../context/useTranslationContext";
 
 type Props = {
   entry: Entry;
@@ -98,7 +98,7 @@ const TranslationItemInner: React.FC<Props> = ({
   onChange,
   onAccept,
 }) => {
-  const { t } = useI18n();
+  const { t } = useI18nContext();
   const theme = useTheme();
   const { showAccepted, metadata } = useTranslationContext();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -218,6 +218,7 @@ const TranslationItemInner: React.FC<Props> = ({
           }
           break;
         }
+
         // Navigate to previous/next translation item
         case "j":
         case "k": {
@@ -230,7 +231,7 @@ const TranslationItemInner: React.FC<Props> = ({
             if (goToElement) {
               goToElement.focus();
             }
-          }, 50); // Delay curto para dar tempo de re-renderizar a lista filtrada
+          }, 50);
           break;
         }
 

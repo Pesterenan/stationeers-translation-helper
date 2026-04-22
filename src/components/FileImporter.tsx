@@ -1,7 +1,7 @@
 import React,  { type ChangeEvent } from "react";
 import Button from "@mui/material/Button";
 import { readFileAsText } from "../lib/fileHelpers";
-import { useI18n } from "../context/I18nContext";
+import { useI18nContext } from "../context/useI18nContext";
 
 type Props = {
   onXml: (fileText: string, fileName?: string, version?: string) => void;
@@ -10,7 +10,7 @@ type Props = {
 };
 
 const FileImporter: React.FC<Props> = ({ onXml, onProgressJson, onStart }) => {
-  const { t } = useI18n();
+  const { t } = useI18nContext();
   const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;

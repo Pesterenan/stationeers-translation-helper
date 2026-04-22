@@ -1,15 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import { locales } from "../locales";
 import type { LocaleKey, TranslationKeys } from "../locales";
+import { I18nContext } from "./useI18nContext";
 
-interface I18nContextType {
-  locale: LocaleKey;
-  t: (path: TranslationKeys, params?: Record<string, string>) => string;
-  changeLanguage: (lang: LocaleKey) => void;
-}
-
-const I18nContext = createContext<I18nContextType | undefined>(undefined);
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getNestedValue = (obj: any, path: string) => {
   return path.split('.').reduce((prev, curr) => {
     return prev ? prev[curr] : undefined;
@@ -28,7 +22,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<LocaleKey>(detectLanguage());
 
   const t = useCallback((path: TranslationKeys, params?: Record<string, string>): string => {
-    const dictionary = locales[locale] as any;
+    const dictionary = locales[locale];
     let value = getNestedValue(dictionary, path);
 
     if (value === undefined) {
@@ -57,12 +51,4 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       {children}
     </I18nContext.Provider>
   );
-}
-
-export function useI18n() {
-  const context = useContext(I18nContext);
-  if (!context) {
-    throw new Error("useI18n must be used within an I18nProvider");
-  }
-  return context;
 }

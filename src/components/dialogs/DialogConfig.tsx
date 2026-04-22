@@ -14,11 +14,11 @@ import {
 } from "@mui/material";
 import type { SelectChangeEvent } from "@mui/material";
 import * as React from "react";
-import { useTranslationContext } from "../context/TranslationContext";
-import { useUIContext } from "../context/UIContext";
-import { useI18n } from "../context/I18nContext";
-import { locales } from "../locales";
-import type { LocaleKey } from "../locales";
+import { locales } from "../../locales";
+import type { LocaleKey } from "../../locales";
+import { useDialogContext } from "../../context/useDialogContext";
+import { useI18nContext } from "../../context/useI18nContext";
+import { useTranslationContext } from "../../context/useTranslationContext";
 
 const FONT_OPTIONS = [
   { value: "font_english", label: "English (Latin Padrão)" },
@@ -28,9 +28,9 @@ const FONT_OPTIONS = [
 ];
 
 const DialogConfig = () => {
-  const { activeDialog, closeDialog } = useUIContext();
+  const { activeDialog, closeDialog } = useDialogContext();
   const { metadata, setMetadata, resetProject } = useTranslationContext();
-  const { t, locale, changeLanguage } = useI18n();
+  const { t, locale, changeLanguage } = useI18nContext();
 
   const [localMeta, setLocalMeta] = React.useState({
     Language: "",
@@ -84,7 +84,7 @@ const DialogConfig = () => {
             >
               {Object.entries(locales).map(([key, dict]) => (
                 <MenuItem key={key} value={key}>
-                  {(dict as any).label}
+                  {(dict).label}
                 </MenuItem>
               ))}
             </Select>
@@ -104,7 +104,7 @@ const DialogConfig = () => {
             onChange={handleChange("Code")}
             placeholder="Ex: pb"
           />
-          
+
           <FormControl fullWidth>
             <InputLabel id="config-font-select-label">{t('dialogConfig.fontLabel')}</InputLabel>
             <Select
@@ -132,8 +132,8 @@ const DialogConfig = () => {
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button 
-          color="error" 
+        <Button
+          color="error"
           onClick={() => { resetProject(); closeDialog(); }}
           sx={{ mr: "auto" }}
         >
