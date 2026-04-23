@@ -142,11 +142,19 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
 
   // Statistics
-  const savedCount = useMemo(
-    () => entries.filter((e) => e.status === "saved").length,
-    [entries],
+  const filteredEntriesForStats = useMemo(
+    () => {
+      if (showEmpty) return entries;
+      return entries.filter((e) => e.original.trim().length > 0);
+    },
+    [entries, showEmpty],
   );
-  const total = entries.length;
+
+  const savedCount = useMemo(
+    () => filteredEntriesForStats.filter((e) => e.status === "saved").length,
+    [filteredEntriesForStats],
+  );
+  const total = filteredEntriesForStats.length;
   const percent = total === 0 ? 0 : Math.round((savedCount / total) * 100);
 
   // Auto-save logic
