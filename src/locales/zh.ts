@@ -25,6 +25,8 @@ export const zh: TranslationSchema = {
     languageLabel: "语言名称 (例如: Portuguese)",
     codeLabel: "语言代码 (例如: pb)",
     fontLabel: "字体 (字符集)",
+    originalFileLabel: "主文件（草稿 ID）",
+    originalFileHelper: "此名称用于在浏览器中识别您的草稿。请勿手动更改。",
     exportFileLabel: "导出文件名 (例如: portuguese.xml)",
     exportFileHelper: "如果为空，将根据语言使用默认名称。",
     resetProject: "重置项目",

@@ -30,7 +30,7 @@ export function mapLanguageToCode(langName: string | undefined, langCode: string
   // Try code first (e.g., "PT", "EN", "ES")
   if (langCode) {
     const code = langCode.toLowerCase().trim();
-    if (code === "pt-br" || code === "pb") return "pb";
+    if (code === "pt-br" || code === "pb") return "pt-br";
     return code;
   }
 

@@ -25,6 +25,8 @@ export const ko: TranslationSchema = {
     languageLabel: "언어 이름 (예: Portuguese)",
     codeLabel: "언어 코드 (예: pb)",
     fontLabel: "글꼴 (문자 집합)",
+    originalFileLabel: "마스터 파일(초안 ID)",
+    originalFileHelper: "이 이름은 브라우저에서 초안을 식별하는 데 사용됩니다. 수동으로 변경하지 마십시오.",
     exportFileLabel: "내보낼 파일 이름 (예: portuguese.xml)",
     exportFileHelper: "비어 있으면 언어에 따른 기본 이름이 사용됩니다.",
     resetProject: "프로젝트 초기화",

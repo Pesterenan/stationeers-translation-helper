@@ -37,6 +37,7 @@ const DialogConfig = () => {
     Code: "",
     Font: "",
     ExportFileName: "",
+    OriginalFileName: "",
   });
 
   const isOpen = activeDialog === "CONFIG";
@@ -48,6 +49,7 @@ const DialogConfig = () => {
         Code: metadata.Code || "",
         Font: metadata.Font || "font_english",
         ExportFileName: metadata.ExportFileName || "",
+        OriginalFileName: metadata.OriginalFileName || "",
       });
     }
   }, [isOpen, metadata]);
@@ -120,6 +122,14 @@ const DialogConfig = () => {
               ))}
             </Select>
           </FormControl>
+
+          <TextField
+            label={t('dialogConfig.originalFileLabel')}
+            fullWidth
+            value={localMeta.OriginalFileName}
+            slotProps={{ input: { readOnly: true } }}
+            helperText={t('dialogConfig.originalFileHelper')}
+          />
 
           <TextField
             label={t('dialogConfig.exportFileLabel')}

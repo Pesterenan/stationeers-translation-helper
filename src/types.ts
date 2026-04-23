@@ -50,6 +50,7 @@ export interface IMetadata {
   Code?: string;
   Font?: string;
   ExportFileName?: string;
+  OriginalFileName?: string;
 }
 
 // Definições de estruturas conhecidas do XML para referência e tipagem futura

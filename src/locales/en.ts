@@ -23,6 +23,8 @@ export const en = {
     languageLabel: "Language Name (Ex: Portuguese)",
     codeLabel: "Language Code (Ex: pb)",
     fontLabel: "Font (Character Set)",
+    originalFileLabel: "Master File (Draft ID)",
+    originalFileHelper: "This name identifies your draft in the browser. Do not change it manually.",
     exportFileLabel: "Exported File Name (Ex: portuguese.xml)",
     exportFileHelper: "If empty, will use default name based on the language.",
     resetProject: "Reset Project",

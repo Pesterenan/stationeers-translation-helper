@@ -25,6 +25,8 @@ export const ru: TranslationSchema = {
     languageLabel: "Название языка (напр.: Portuguese)",
     codeLabel: "Код языка (напр.: pb)",
     fontLabel: "Шрифт (набор символов)",
+    originalFileLabel: "Основной файл (идентификатор черновика)",
+    originalFileHelper: "Это имя идентифицирует ваш черновик в браузере. Не меняйте его вручную.",
     exportFileLabel: "Имя экспортируемого файла (напр.: portuguese.xml)",
     exportFileHelper: "Если пусто, будет использоваться имя по умолчанию на основе языка.",
     resetProject: "Сбросить проект",

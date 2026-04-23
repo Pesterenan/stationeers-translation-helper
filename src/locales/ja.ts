@@ -25,6 +25,8 @@ export const ja: TranslationSchema = {
     languageLabel: "言語名 (例: Portuguese)",
     codeLabel: "言語コード (例: pb)",
     fontLabel: "フォント (文字セット)",
+    originalFileLabel: "マスターファイル（ドラフトID）",
+    originalFileHelper: "この名前はブラウザ上で下書きを識別するためのものです。手動で変更しないでください。",
     exportFileLabel: "エクスポートファイル名 (例: portuguese.xml)",
     exportFileHelper: "空の場合、言語に基づいたデフォルト名が使用されます。",
     resetProject: "プロジェクトをリセット",

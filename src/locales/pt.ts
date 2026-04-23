@@ -25,6 +25,8 @@ export const pt: TranslationSchema = {
     languageLabel: "Nome do Idioma (Ex: Portuguese)",
     codeLabel: "Código do Idioma (Ex: pb)",
     fontLabel: "Fonte (Conjunto de Caracteres)",
+    originalFileLabel: "Arquivo Mestre (ID do Rascunho)",
+    originalFileHelper: "Este nome identifica seu rascunho no navegador. Não altere manualmente.",
     exportFileLabel: "Nome do Arquivo Exportado (Ex: portuguese.xml)",
     exportFileHelper: "Se vazio, usará o nome padrão baseado no idioma.",
     resetProject: "Resetar Projeto",
