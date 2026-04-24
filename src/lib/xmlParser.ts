@@ -135,24 +135,27 @@ export function parseStationeersXml(xmlString: string): {
     throw new Error("XML parse error: " + parsererror.textContent);
 
   const entries: Entry[] = [];
+  const root = doc.documentElement;
 
   // 1. Extrair Metadados
   const metadata: Record<string, string | undefined> = {
     Language:
-      (doc.querySelector("Language > Name") ?? doc.querySelector("Name"))
+      (root.querySelector(":scope > Name") ?? root.querySelector("Name"))
         ?.textContent ?? undefined,
     Code:
-      (doc.querySelector("Language > Code") ?? doc.querySelector("Code"))
+      (root.querySelector(":scope > Code") ?? root.querySelector("Code"))
         ?.textContent ?? undefined,
     Font:
-      (doc.querySelector("Language > Font") ?? doc.querySelector("Font"))
+      (root.querySelector(":scope > Font") ?? root.querySelector("Font"))
+        ?.textContent ?? undefined,
+    OriginalFileName:
+      (root.querySelector(":scope > OriginalFileName") ?? root.querySelector("OriginalFileName"))
         ?.textContent ?? undefined,
   };
 
-  const root = doc.querySelector("Language");
-  if (!root) {
+  if (root.nodeName !== "Language") {
     // Se não tem tag Language, pode ser um fragmento ou formato inválido
-    console.warn("Tag <Language> não encontrada na raiz.");
+    console.warn("Tag <Language> não encontrada na raiz. Nome encontrado:", root.nodeName);
   }
 
   // 2. Processar Seções Configuradas (Standard Records)
