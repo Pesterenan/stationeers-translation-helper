@@ -1,4 +1,6 @@
-export const en = {
+import type { TranslationSchema } from "./index.ts";
+
+export const en: TranslationSchema = {
   app: {
     title: "Stationeers Translation Helper",
     subtitle: "Import the original game XML file, edit translations and export the new XML",
@@ -6,7 +8,7 @@ export const en = {
   },
   toolbar: {
     import: "Import XML / JSON",
-    settings: "Project Settings",
+    settings: "Settings",
     saveProgress: "Save Progress",
     downloadXml: "Download XML",
     searchPlaceholder: "Search",
@@ -17,16 +19,17 @@ export const en = {
     draftSaved: "Draft saved at",
   },
   dialogConfig: {
-    title: "Project Settings",
-    description: "Adjust XML file metadata and export settings.",
+    title: "Settings",
+    description: "Adjust application language and export settings.",
     uiLanguageLabel: "Interface Language",
+    filePropertiesDescription: "Adjust the language settings for the exported file.",
     languageLabel: "Language Name (Ex: Portuguese)",
     codeLabel: "Language Code (Ex: pb)",
     fontLabel: "Font (Character Set)",
     originalFileLabel: "Master File (Draft ID)",
-    originalFileHelper: "This name identifies your draft in the browser. Do not change it manually.",
-    exportFileLabel: "Exported File Name (Ex: portuguese.xml)",
-    exportFileHelper: "If empty, will use default name based on the language.",
+    originalFileHelper: "This is the name of the file loaded as the translation base.",
+    exportFileLabel: "Exported File Name",
+    exportFileHelper: "If empty, it will be based on the language.",
     resetProject: "Reset Project",
     cancel: "Cancel",
     save: "Save Settings",
@@ -59,8 +62,3 @@ export const en = {
     tooltipAccept: "Accept (Ctrl/Cmd + Enter or Ctrl+M)",
   }
 } as const;
-
-export type NestedKeys<T> = {
-  [K in keyof T & string]: T[K] extends object ? `${K}.${NestedKeys<T[K]>}` : K;
-}[keyof T & string];
-export type TranslationKeys = NestedKeys<typeof en>;
