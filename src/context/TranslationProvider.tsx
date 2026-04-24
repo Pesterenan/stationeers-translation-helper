@@ -43,10 +43,16 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
 
   // Helper to get storage key
-  const getStorageKey = useCallback((lang?: string, code?: string) => {
+  const getStorageKey = useCallback((lang?: string, code?: string, fileName?: string) => {
     const l = lang?.toLowerCase().replace(/\s+/g, "-").trim() || "unknown";
     const c = code?.toLowerCase().replace(/\s+/g, "-").trim() || "";
     const suffix = c ? `${l}_${c}` : l;
+
+    if (fileName) {
+      const fn = fileName.toLowerCase().replace(/\s+/g, "-").replace(/\.xml$/, "").trim();
+      return `sth_draft_${fn}_${suffix}`;
+    }
+
     return `sth_draft_${suffix}`;
   }, []);
 
@@ -136,11 +142,19 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
 
   // Statistics
-  const savedCount = useMemo(
-    () => entries.filter((e) => e.status === "saved").length,
-    [entries],
+  const filteredEntriesForStats = useMemo(
+    () => {
+      if (showEmpty) return entries;
+      return entries.filter((e) => e.original.trim().length > 0);
+    },
+    [entries, showEmpty],
   );
-  const total = entries.length;
+
+  const savedCount = useMemo(
+    () => filteredEntriesForStats.filter((e) => e.status === "saved").length,
+    [filteredEntriesForStats],
+  );
+  const total = filteredEntriesForStats.length;
   const percent = total === 0 ? 0 : Math.round((savedCount / total) * 100);
 
   // Auto-save logic
@@ -162,7 +176,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         timestamp: new Date().toISOString(),
       };
 
-      localStorage.setItem(getStorageKey(metadata.Language, metadata.Code), JSON.stringify(draftData));
+      const storageKey = getStorageKey(metadata.Language, metadata.Code, metadata.OriginalFileName);
+      localStorage.setItem(storageKey, JSON.stringify(draftData));
       setLastAutoSave(new Date());
     }, 3000); // Save after 3s of inactivity
 
@@ -187,14 +202,26 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           Code: metadata?.Code || xmlMeta.Code,
           Font: metadata?.Font || xmlMeta.Font,
           ExportFileName: metadata?.ExportFileName,
+          OriginalFileName: fileName || metadata?.OriginalFileName || xmlMeta.OriginalFileName,
         };
 
         // Debug draft recovery
-        console.log("Tentando recuperar rascunho para:", finalMeta.Language, finalMeta.Code);
+        console.log("Tentando recuperar rascunho para:", finalMeta.Language, finalMeta.Code, finalMeta.OriginalFileName);
 
         // Check for existing draft in LocalStorage
-        const storageKey = getStorageKey(finalMeta.Language || "", finalMeta.Code || "");
-        const savedDraft = localStorage.getItem(storageKey);
+        // Try with fileName first, then fallback to old format
+        const storageKey = getStorageKey(finalMeta.Language || "", finalMeta.Code || "", finalMeta.OriginalFileName);
+        let savedDraft = localStorage.getItem(storageKey);
+
+        if (!savedDraft) {
+          // Fallback to old format (no fileName in key)
+          const fallbackKey = getStorageKey(finalMeta.Language || "", finalMeta.Code || "");
+          savedDraft = localStorage.getItem(fallbackKey);
+          if (savedDraft) {
+            console.log("Rascunho antigo encontrado, migrando para novo formato...");
+          }
+        }
+
         let draftTranslations: Record<string, string | { translation: string, original: string }> = {};
 
         if (savedDraft) {
