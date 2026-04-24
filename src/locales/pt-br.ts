@@ -1,6 +1,4 @@
-import type { TranslationSchema } from "./index.ts";
-
-export const pt: TranslationSchema = {
+export const ptBR = {
   app: {
     title: "Stationeers Translation Helper",
     subtitle: "Importe o arquivo XML original do jogo, edite as traduções e exporte o novo XML",
@@ -8,7 +6,7 @@ export const pt: TranslationSchema = {
   },
   toolbar: {
     import: "Importar XML / JSON",
-    settings: "Configurar Projeto",
+    settings: "Configurações",
     saveProgress: "Salvar Progresso",
     downloadXml: "Baixar XML",
     searchPlaceholder: "Pesquisar",
@@ -19,16 +17,17 @@ export const pt: TranslationSchema = {
     draftSaved: "Rascunho salvo às",
   },
   dialogConfig: {
-    title: "Configurações do Projeto",
-    description: "Ajuste os metadados do arquivo XML e as configurações de exportação.",
+    title: "Configurações",
+    description: "Ajuste o idioma da aplicação e as configurações de exportação.",
     uiLanguageLabel: "Idioma da Interface",
+    filePropertiesDescription: "Ajuste as definições de idioma do arquivo exportado.",
     languageLabel: "Nome do Idioma (Ex: Portuguese)",
     codeLabel: "Código do Idioma (Ex: pb)",
     fontLabel: "Fonte (Conjunto de Caracteres)",
     originalFileLabel: "Arquivo Mestre (ID do Rascunho)",
-    originalFileHelper: "Este nome identifica seu rascunho no navegador. Não altere manualmente.",
-    exportFileLabel: "Nome do Arquivo Exportado (Ex: portuguese.xml)",
-    exportFileHelper: "Se vazio, usará o nome padrão baseado no idioma.",
+    originalFileHelper: "Este é o nome do arquivo carregado como base da tradução.",
+    exportFileLabel: "Nome do Arquivo Exportado",
+    exportFileHelper: "Se vazio, será baseado no idioma.",
     resetProject: "Resetar Projeto",
     cancel: "Cancelar",
     save: "Salvar Configurações",

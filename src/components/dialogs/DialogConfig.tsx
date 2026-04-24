@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  Grid,
   InputLabel,
   MenuItem,
   Select,
@@ -76,36 +77,66 @@ const DialogConfig = () => {
             {t('dialogConfig.description')}
           </Typography>
 
-          <FormControl fullWidth>
-            <InputLabel id="config-ui-lang-select-label">{t('dialogConfig.uiLanguageLabel')}</InputLabel>
-            <Select
-              labelId="config-ui-lang-select-label"
-              value={locale}
-              label={t('dialogConfig.uiLanguageLabel')}
-              onChange={(e) => changeLanguage(e.target.value as LocaleKey)}
-            >
-              {Object.entries(locales).map(([key, dict]) => (
-                <MenuItem key={key} value={key}>
-                  {(dict).label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Grid container gap={2}>
+            <Grid size="grow">
+              <FormControl fullWidth>
+                <InputLabel id="config-ui-lang-select-label">{t('dialogConfig.uiLanguageLabel')}</InputLabel>
+                <Select
+                  
+                  labelId="config-ui-lang-select-label"
+                  value={locale}
+                  label={t('dialogConfig.uiLanguageLabel')}
+                  onChange={(e) => changeLanguage(e.target.value as LocaleKey)}
+                  size="small"
+                >
+                  {Object.entries(locales).map(([key, dict]) => (
+                    <MenuItem key={key} value={key}>
+                      {(dict).label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
 
-          <TextField
-            label={t('dialogConfig.languageLabel')}
-            fullWidth
-            value={localMeta.Language}
-            onChange={handleChange("Language")}
-            placeholder="Ex: Portuguese"
-          />
-          <TextField
-            label={t('dialogConfig.codeLabel')}
-            fullWidth
-            value={localMeta.Code}
-            onChange={handleChange("Code")}
-            placeholder="Ex: pb"
-          />
+            <Grid size="grow">
+              <TextField
+                fullWidth
+                label={t('dialogConfig.exportFileLabel')}
+                value={localMeta.ExportFileName}
+                onChange={handleChange("ExportFileName")}
+                helperText={t('dialogConfig.exportFileHelper')}
+                placeholder="Ex: portuguese-brazilian.xml"
+                size="small"
+              />
+            </Grid>
+          </Grid>
+
+          <Typography variant="body2" color="text.secondary">
+            {t('dialogConfig.filePropertiesDescription')}
+          </Typography>
+
+          <Grid container gap={2}>
+            <Grid size="grow">
+              <TextField
+                fullWidth
+                label={t('dialogConfig.languageLabel')}
+                value={localMeta.Language}
+                onChange={handleChange("Language")}
+                placeholder="Ex: Portuguese"
+                size="small"
+              />
+            </Grid>
+            <Grid size="grow">
+              <TextField
+                fullWidth
+                label={t('dialogConfig.codeLabel')}
+                value={localMeta.Code}
+                onChange={handleChange("Code")}
+                placeholder="Ex: PB"
+                size="small"
+              />
+            </Grid>
+          </Grid>
 
           <FormControl fullWidth>
             <InputLabel id="config-font-select-label">{t('dialogConfig.fontLabel')}</InputLabel>
@@ -114,6 +145,7 @@ const DialogConfig = () => {
               value={localMeta.Font}
               label={t('dialogConfig.fontLabel')}
               onChange={handleFontChange}
+              size="small"
             >
               {FONT_OPTIONS.map((opt) => (
                 <MenuItem key={opt.value} value={opt.value}>
@@ -127,17 +159,10 @@ const DialogConfig = () => {
             label={t('dialogConfig.originalFileLabel')}
             fullWidth
             value={localMeta.OriginalFileName}
+            disabled
             slotProps={{ input: { readOnly: true } }}
+            size="small"
             helperText={t('dialogConfig.originalFileHelper')}
-          />
-
-          <TextField
-            label={t('dialogConfig.exportFileLabel')}
-            fullWidth
-            value={localMeta.ExportFileName}
-            onChange={handleChange("ExportFileName")}
-            helperText={t('dialogConfig.exportFileHelper')}
-            placeholder="Ex: portuguese.xml"
           />
         </Stack>
       </DialogContent>
