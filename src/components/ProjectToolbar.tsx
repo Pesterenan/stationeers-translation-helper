@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   Button,
   Checkbox,
+  CircularProgress,
   FormControlLabel,
   Grid,
   InputAdornment,
@@ -38,30 +39,31 @@ const ProjectToolbar: React.FC = () => {
     setShowEmpty,
     loadXml,
   } = useTranslationContext();
-
   const { openDialog } = useDialogContext();
   const { t } = useI18nContext();
 
   const theme = useTheme();
-  const [searchText, setSearchText] = React.useState(searchTerm || "");
 
-  const hasXml = !!xmlDoc;
-  const entriesCount = entries.length;
+  const searchTimeoutId = useRef<number | undefined>(undefined);
+  const [localSearchText, setLocalSearchText] = React.useState(searchTerm || "");
+  const [loadingSearch, setLoadingSearch] = React.useState(false);
 
   React.useEffect(() => {
-    // Se o texto for curto, atualizamos imediatamente para "resetar" a busca sem lag
-    if (searchText.length <= 2) {
-      setSearchTerm(searchText);
+    clearTimeout(searchTimeoutId.current);
+    if (!localSearchText.length) {
+      setLoadingSearch(false);
+      setSearchTerm(localSearchText);
       return;
     }
 
-    // Para textos longos (pesquisa ativa), usamos o debounce para performance
-    const delayDebounceFn = setTimeout(() => {
-      setSearchTerm(searchText);
-    }, 300);
+    setLoadingSearch(true);
+    searchTimeoutId.current = setTimeout(() => {
+      setLoadingSearch(false);
+      setSearchTerm(localSearchText);
+    }, 500);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchText, setSearchTerm]);
+    return () => clearTimeout(searchTimeoutId.current);
+  }, [localSearchText, setSearchTerm]);
 
   return (
     <Grid
@@ -73,6 +75,7 @@ const ProjectToolbar: React.FC = () => {
       {/* Actions Toolbar */}
       <Paper variant="outlined">
         <Grid
+          alignItems="center"
           container
           gap={1}
           justifyContent="space-between"
@@ -82,32 +85,28 @@ const ProjectToolbar: React.FC = () => {
           <FileImporter
             onXml={loadXml}
             onProgressJson={loadProgressJson}
-            onStart={() => {}} // Loading agora é gerenciado pelo Contexto
+            onStart={() => { }}
           />
           {/* Metadata & Config */}
-          {hasXml ? (
-            <Button 
-              variant="outlined" 
-              startIcon={<Settings />}
-              onClick={() => openDialog("CONFIG")}
-            >
-              {t('toolbar.settings')}
-            </Button>
-          ) : (
-            <Grid size="grow" />
-          )}
+          <Button
+            variant="outlined"
+            startIcon={<Settings />}
+            onClick={() => openDialog("CONFIG")}
+          >
+            {t('toolbar.settings')}
+          </Button>
 
           <Button
             variant="outlined"
             onClick={exportProgressJson}
-            disabled={entriesCount === 0}
+            disabled={entries.length === 0}
           >
             {t('toolbar.saveProgress')}
           </Button>
           <Button
             variant="contained"
             onClick={downloadTranslatedXml}
-            disabled={!hasXml}
+            disabled={!xmlDoc}
           >
             {t('toolbar.downloadXml')}
           </Button>
@@ -115,15 +114,18 @@ const ProjectToolbar: React.FC = () => {
       </Paper>
 
       {/* Global Progress */}
-      {entriesCount > 0 && (
+      {entries.length > 0 && (
         <Grid
           container
-          flexDirection="row"
+          flexDirection={{ xs: "column", lg: "row" }}
+          gap={{ xs: 2, lg: 0 }}
           flexWrap="nowrap"
           alignItems="center"
           paddingInline={2}
         >
-          <Grid container alignItems="center" gap={2} size="auto">
+          <Grid container alignItems="center" gap={2} 
+          flexWrap="nowrap"
+          size={{ xs: 12, lg: "grow" }}>
             <TextField
               id="search"
               slotProps={{
@@ -131,7 +133,7 @@ const ProjectToolbar: React.FC = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <Tooltip title={t('toolbar.searchTooltip')}>
-                        <Search />
+                        {loadingSearch ? <CircularProgress size={20} /> : <Search />}
                       </Tooltip>
                     </InputAdornment>
                   ),
@@ -140,16 +142,16 @@ const ProjectToolbar: React.FC = () => {
                   sx: { borderRadius: "100px", width: 250 },
                 },
               }}
-              onChange={(event) => setSearchText(event.currentTarget.value)}
-              value={searchText}
+              onChange={(event) => setLocalSearchText(event.currentTarget.value)}
+              value={localSearchText}
               variant="outlined"
             />
-            
+
             <FormControlLabel
               control={
-                <Checkbox 
-                  checked={showAccepted} 
-                  onChange={(e) => setShowAccepted(e.target.checked)} 
+                <Checkbox
+                  checked={showAccepted}
+                  onChange={(e) => setShowAccepted(e.target.checked)}
                   size="small"
                 />
               }
@@ -161,9 +163,9 @@ const ProjectToolbar: React.FC = () => {
             />
             <FormControlLabel
               control={
-                <Checkbox 
-                  checked={showEmpty} 
-                  onChange={(e) => setShowEmpty(e.target.checked)} 
+                <Checkbox
+                  checked={showEmpty}
+                  onChange={(e) => setShowEmpty(e.target.checked)}
                   size="small"
                 />
               }
@@ -174,7 +176,7 @@ const ProjectToolbar: React.FC = () => {
               }
             />
           </Grid>
-           <Grid container flexDirection="column" size="grow" paddingInline={2}>
+          <Grid container flexDirection="column" size={{ xs: 12, lg: "grow" }} paddingInline={2}>
             <Grid container flexDirection="row" justifyContent="space-between">
               <Typography variant="caption" fontWeight="bold">
                 {t('toolbar.totalProgress')}
