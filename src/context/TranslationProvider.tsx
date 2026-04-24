@@ -281,20 +281,24 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   }, [getStorageKey, metadata, t]);
 
 
-  // // Load mock data on development
-  // useEffect(() => {
-  //   fetch("/mock_language.xml")
-  //     .then((res) => {
-  //       if (res.ok) return res.text();
-  //       throw new Error("Mock not found");
-  //     })
-  //     .then((text) => {
-  //       loadXml(text, "mock_language.xml");
-  //     })
-  //     .catch(() => {
-  //       // Silently ignore if mock is not available
-  //     });
-  // }, [loadXml]);
+  // Load mock data on development
+  const hasLoadedMock = React.useRef(false);
+  useEffect(() => {
+    if (hasLoadedMock.current) return;
+
+    fetch("language_file_example.xml")
+      .then((res) => {
+        if (res.ok) return res.text();
+        throw new Error("Mock not found");
+      })
+      .then((text) => {
+        hasLoadedMock.current = true;
+        loadXml(text, "language_file_example.xml");
+      })
+      .catch(() => {
+        // Silently ignore if mock is not available
+      });
+  }, [loadXml]);
 
   const loadProgressJson = useCallback((jsonText: string) => {
     setIsLoading(true);

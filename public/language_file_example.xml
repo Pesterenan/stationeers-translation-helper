@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Language>
+  <Name>Tutorial (English)</Name>
+  <Code>EN</Code>
+  <Font>font_english</Font>
+  
+  <Interface>
+    <Record>
+      <Key>Tutorial_01_Intro</Key>
+      <Value>Welcome to Stationeers Translation Helper! This item-based interface simplifies game localization.</Value>
+    </Record>
+    <Record>
+      <Key>Tutorial_02_NormalState</Key>
+      <Value>This is an 'Unchanged' entry. It means you haven't typed anything in the translation field yet. The status of this item is gray.</Value>
+    </Record>
+    <Record>
+      <Key>Tutorial_03_EditedState</Key>
+      <Value>Try changing this text! Once you type something but haven't saved and leave the field, the status of the item turns ORANGE (Edited). This means the change is only in your current session.</Value>
+    </Record>
+    <Record>
+      <Key>Tutorial_04_SavedState</Key>
+      <Value>After editing, press Ctrl+Enter/Ctrl+M (or the Accept icon). The status of the item turns GREEN (Saved). This change will be included in your exported XML.</Value>
+    </Record>
+    <Record>
+      <Key>Tutorial_05_InsertingTags</Key>
+      <Value><![CDATA[Stationeers uses tags like {KEY:HardcodedGameValue} or {LINK:Page;Custom Text to be translated}.]]> When typing text, you can press Ctrl and the letter that appears in the tag (e.g. 'y', 'u', 'Y', 'U'...) to automatically insert it in front of the cursor. Tags with a semicolon ';' will select the translatable text in front of it to ease translation, the press Tab to exit the tag.</Value>
+    </Record>
+  </Interface>
+  <Keys>
+    <Record>
+      <Key> Keys_01_Intro </Key>
+      <Value>These are some of the key shortcuts available</Value>
+    </Record>
+    <Record>
+      <Key> Keys_02_Search </Key>
+      <Value>Press CTRL+F to go straight to the search field. You can search for words on Keys, Original text, and Translated text.</Value>
+    </Record>
+    <Record>
+      <Key> Keys_03_GoToPage </Key>
+      <Value>Press CTRL+G to open the Go To Page dialog if needed.</Value>
+    </Record>
+    <Record>
+      <Key> Keys_04_Editing </Key>
+      <Value>When editing text inside the translation text field, you have some shortcuts to ease typing:</Value>
+    </Record>
+    <Record>
+      <Key> Keys_05_Navigate </Key>
+      <Value>Press CTRL+J/CTRL+K to navigate up and down and go straight into the next/previous item.</Value>
+    </Record>
+    <Record>
+      <Key> Keys_06_InsertTag </Key>
+      <Value>Press CTRL+(tag key) to automatically insert the text of the available tags in the original text.</Value>
+    </Record>
+    <Record>
+      <Key> Keys_07_Translate </Key>
+      <Value>Press ALT+T to get a Google Translate entry of the original text and replace the translated text.</Value>
+    </Record>
+    <Record>
+      <Key> Keys_08_Copy </Key>
+      <Value>Press CTRL+SHIFT+C to just copy over the original text.</Value>
+    </Record>
+    <Record>
+      <Key> Keys_09_Accept </Key>
+      <Value>Press CTRL+M/CTRL+Enter to accept entry and go to the next one.</Value>
+    </Record>
+  </Keys>
+</Language>
