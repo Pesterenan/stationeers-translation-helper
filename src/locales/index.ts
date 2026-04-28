@@ -6,33 +6,33 @@ import { ja } from "./ja";
 import { ko } from "./ko";
 
 /** Available Language Keys */
-export type LocaleKey = 'en' | 'ja' | 'ko' | 'ptBR' | 'ru' | 'zh';
+export type TLocaleKey = 'en' | 'ja' | 'ko' | 'ptBR' | 'ru' | 'zh';
 
 /** Recursively converts all leaves of T to strings.
 * Maintains the same key structure, but normalizes the values. */
-type LeavesToString<T> = T extends string
+type TLeavesToString<T> = T extends string
   ? string
-  : { [K in keyof T]: LeavesToString<T[K]> };
+  : { [K in keyof T]: TLeavesToString<T[K]> };
 
 /** Generates paths of type "a.b.c" from a nested object.
 * Returns a union of strings containing all paths up to the leaves. */
-type NestedPaths<T> = {
+type TNestedPaths<T> = {
   [K in keyof T & string]: T[K] extends object
-  ? `${K}.${NestedPaths<T[K]>}`
+  ? `${K}.${TNestedPaths<T[K]>}`
   : K;
 }[keyof T & string];
 
 /** Base Schema (structure) derived from pt - just keys/strings. */
-export type TranslationSchema = LeavesToString<typeof ptBR>;
+export type TTranslationSchema = TLeavesToString<typeof ptBR>;
 
 /** Every possible key as a string chain: "a.b.c" */
-export type TranslationKeys = NestedPaths<TranslationSchema>;
+export type TTranslationKeys = TNestedPaths<TTranslationSchema>;
 
 /** LocaleData: translation schema + friendly label */
-export type LocaleData = TranslationSchema & { label: string };
+export type TLocaleData = TTranslationSchema & { label: string };
 
 /** Locales Dictionary */
-export const locales: Record<LocaleKey, LocaleData> = {
+export const locales: Record<TLocaleKey, TLocaleData> = {
   en: { ...en, label: "English" },
   ptBR: { ...ptBR, label: "Português Brasileiro" },
   zh: { ...zh, label: "简体中文" },

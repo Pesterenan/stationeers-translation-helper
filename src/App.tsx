@@ -7,6 +7,8 @@ import ProjectToolbar from "./components/ProjectToolbar";
 import SectionTabs from "./components/SectionTabs";
 import DialogGoToPage from "./components/dialogs/DialogGoToPage";
 import DialogConfig from "./components/dialogs/DialogConfig";
+import DialogAlert from "./components/dialogs/DialogAlert";
+import DialogConfirm from "./components/dialogs/DialogConfirm";
 
 import { useDialogContext } from "./context/useDialogContext";
 import { useTranslationContext } from "./context/useTranslationContext";
@@ -61,6 +63,8 @@ export default function App() {
         {/* Global Dialogs */}
         <DialogGoToPage />
         <DialogConfig />
+        <DialogAlert />
+        <DialogConfirm />
 
         {/* Header & Toolbar Section */}
         <Grid

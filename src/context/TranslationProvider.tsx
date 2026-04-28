@@ -5,7 +5,7 @@ import React, {
   useEffect,
   type ReactNode,
 } from "react";
-import { type Entry, type IMetadata } from "../types";
+import { type IEntry, type IMetadata } from "../types";
 import {
   parseStationeersXml,
   buildTranslatedStationeersXml,
@@ -18,10 +18,12 @@ import {
 } from "../lib/entryHelpers";
 import { TranslationContext } from "./useTranslationContext";
 import { useI18nContext } from "./useI18nContext";
+import { useDialogContext } from "./useDialogContext";
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const { t } = useI18nContext();
-  const [entries, setEntries] = useState<Entry[]>([]);
+  const { showAlert } = useDialogContext();
+  const [entries, setEntries] = useState<IEntry[]>([]);
   const [xmlDoc, setXmlDoc] = useState<XMLDocument | null>(null);
   const [metadata, setMetadata] = useState<IMetadata | undefined>(() => {
     const saved = localStorage.getItem("sth_config");
@@ -67,7 +69,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
   // Group entries by section (Memoized: only re-runs when entries change)
   const groupedEntries = useMemo(() => {
-    return entries.reduce<Record<string, Entry[]>>((acc, entry) => {
+    return entries.reduce<Record<string, IEntry[]>>((acc, entry) => {
       const key = entry.section;
       if (!acc[key]) acc[key] = [];
       acc[key].push(entry);
@@ -79,7 +81,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const categories = useMemo(() => {
     const lowerTerm = searchTerm.toLowerCase();
     const isSearchActive = searchTerm.length > 2;
-    const result: Record<string, Entry[]> = {};
+    const result: Record<string, IEntry[]> = {};
 
     Object.entries(groupedEntries).forEach(([section, sectionEntries]) => {
       const matches = sectionEntries.filter((entry) => {
@@ -187,7 +189,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   // Actions
   const loadXml = useCallback((text: string, fileName?: string, version?: string) => {
     setIsLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         const {
           entries: parsedEntries,
@@ -197,7 +199,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
         // Priority: 1. Current sth_config (manually set), 2. XML metadata
         // If we have a Language in sth_config, we assume this is the target project.
-        const finalMeta = {
+        const finalMeta: IMetadata = {
           Language: metadata?.Language || xmlMeta.Language,
           Code: metadata?.Code || xmlMeta.Code,
           Font: metadata?.Font || xmlMeta.Font,
@@ -235,7 +237,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        const initialized = parsedEntries.map((e) => {
+        const initialized: IEntry[] = parsedEntries.map((e) => {
           const combinedKey = `${e.section}|${e.key}`;
           const draftEntry = draftTranslations[combinedKey];
 
@@ -273,12 +275,12 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       } catch (err: unknown) {
         console.error(t('messages.xmlError'), err);
         const message = err instanceof Error ? err.message : String(err);
-        alert(t('messages.xmlError') + " " + message);
+        await showAlert(t('app.title'), t('messages.xmlError') + " " + message);
       } finally {
         setIsLoading(false);
       }
     }, 600); // 600ms para aguardar animação da UI
-  }, [getStorageKey, metadata, t]);
+  }, [getStorageKey, metadata, t, showAlert]);
 
 
   // Load mock data on development
@@ -302,7 +304,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
   const loadProgressJson = useCallback((jsonText: string) => {
     setIsLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         const obj = JSON.parse(jsonText);
         const translations: Record<string, string | { translation: string, original: string }> = obj.translations ?? {};
@@ -338,14 +340,55 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         console.error(t('messages.jsonError'), err);
-        alert(
+        await showAlert(
+          t('app.title'),
           t('messages.jsonError') + " " + message,
         );
       } finally {
         setIsLoading(false);
       }
     }, 600);
-  }, [t]);
+  }, [t, showAlert]);
+
+  const importTranslationsFromXml = useCallback((xmlText: string) => {
+    setIsLoading(true);
+    setTimeout(async () => {
+      try {
+        const { entries: importedEntries } = parseStationeersXml(xmlText);
+        
+        // Criar um mapa para busca rápida: "section|key" -> originalText (que é a tradução no arquivo importado)
+        const translationMap = new Map<string, string>();
+        importedEntries.forEach(e => {
+          translationMap.set(`${e.section}|${e.key}`, e.original);
+        });
+
+        setEntries((prev) => 
+          prev.map(e => {
+            const key = `${e.section}|${e.key}`;
+            const importedTranslation = translationMap.get(key);
+            
+            if (importedTranslation && importedTranslation.trim() !== "") {
+              return {
+                ...e,
+                translation: importedTranslation,
+                savedTranslation: importedTranslation,
+                status: "saved" as const,
+                originalAtTranslation: e.original
+              };
+            }
+            return e;
+          })
+        );
+
+        await showAlert(t('app.title'), t('messages.importSuccess'));
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        await showAlert(t('app.title'), t('messages.xmlError') + " " + message);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 600);
+  }, [t, showAlert]);
 
   const updateEntry = useCallback((id: string, value: string) => {
     setEntries((prev) =>
@@ -399,10 +442,13 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     );
   }, [entries, metadata, originalFileName, sourceVersion]);
 
-  const downloadTranslatedXml = useCallback(() => {
-    if (!xmlDoc) return alert(t('messages.noXml'));
+  const downloadTranslatedXml = useCallback(async () => {
+    if (!xmlDoc) {
+      await showAlert(t('app.title'), t('messages.noXml'));
+      return;
+    }
     setIsLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         let docToUse = xmlDoc;
         if (metadata) {
@@ -435,12 +481,12 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       } catch (err: unknown) {
         console.error(t('messages.exportError'), err);
         const message = err instanceof Error ? err.message : String(err);
-        alert(t('messages.exportError') + " " + message);
+        await showAlert(t('app.title'), t('messages.exportError') + " " + message);
       } finally {
         setIsLoading(false);
       }
     }, 600);
-  }, [xmlDoc, metadata, entries, originalFileName, t]);
+  }, [xmlDoc, metadata, entries, originalFileName, t, showAlert]);
 
   const changeTab = useCallback((newValue: string) => {
     setActiveSection(newValue);
@@ -461,36 +507,38 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      acceptEntry,
       activeSection,
       categories,
+      changeTab,
+      downloadTranslatedXml,
       entries,
+      exportProgressJson,
+      importTranslationsFromXml,
       isLoading,
-      metadata,
-      page,
-      searchTerm,
-      showAccepted,
-      showEmpty,
-      sections,
-      xmlDoc,
-      sourceVersion,
       lastAutoSave,
+      loadProgressJson,
+      loadXml,
+      metadata,
+      originalFileName,
+      page,
       percent,
+      resetProject,
       savedCount,
-      total,
-      totalPages,
+      searchTerm,
+      sections,
       setMetadata,
       setPage,
       setSearchTerm,
       setShowAccepted,
       setShowEmpty,
-      acceptEntry,
-      changeTab,
-      downloadTranslatedXml,
-      exportProgressJson,
-      loadProgressJson,
-      loadXml,
-      resetProject,
+      showAccepted,
+      showEmpty,
+      sourceVersion,
+      total,
+      totalPages,
       updateEntry,
+      xmlDoc,
     }),
     [
       activeSection,
@@ -510,12 +558,11 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       savedCount,
       total,
       totalPages,
-      // Actions que são estáveis (useCallback) não precisam entrar no deps array
-      // se quisermos ser puristas, mas é seguro listar.
       acceptEntry,
       changeTab,
       downloadTranslatedXml,
       exportProgressJson,
+      importTranslationsFromXml,
       loadProgressJson,
       loadXml,
       resetProject,

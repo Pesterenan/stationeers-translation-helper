@@ -16,11 +16,11 @@ createRoot(document.getElementById("root")!).render(
     <I18nProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <TranslationProvider>
-          <DialogProvider>
+        <DialogProvider>
+          <TranslationProvider>
             <App />
-          </DialogProvider>
-        </TranslationProvider>
+          </TranslationProvider>
+        </DialogProvider>
       </ThemeProvider>
     </I18nProvider>
   </StrictMode>,

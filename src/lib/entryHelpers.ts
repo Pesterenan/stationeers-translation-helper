@@ -1,23 +1,37 @@
-import type { Entry } from "../types";
+import type { IEntry } from "../types";
 
-/** Calcula status a partir dos campos */
-export const computeStatus = (e: Entry): Entry["status"] => {
-  if (e.savedTranslation && e.translation === e.savedTranslation) return "saved";
-  if (e.translation != null && e.translation !== "" && e.translation !== e.original) return "edited";
-  return "unchanged";
+// Helper to determine entry status based on translation and original text
+export const computeStatus = (e: IEntry): IEntry["status"] => {
+  if (!e.translation || e.translation.trim() === "") {
+    return "unchanged";
+  }
+
+  // If we have a translation but it hasn't been "accepted" (saved)
+  if (e.translation !== e.savedTranslation) {
+    return "edited";
+  }
+
+  return "saved";
 };
 
-/** Atualiza a tradução (edição local) */
-export const updateTranslation = (e: Entry, newValue: string): Entry => {
-  const updated = { ...e, translation: newValue };
-  updated.status = computeStatus(updated);
-  return updated;
+export const updateTranslation = (e: IEntry, newValue: string): IEntry => {
+  const nextTranslation = newValue.trim() === "" ? undefined : newValue;
+  const nextStatus = nextTranslation === e.savedTranslation ? (nextTranslation ? "saved" : "unchanged") : "edited";
+
+  return {
+    ...e,
+    translation: nextTranslation,
+    status: nextStatus,
+  };
 };
 
-/** Marca como salvo/aceito (usado ao "aceitar" por card ou ao exportar progresso) */
-export const acceptTranslation = (e: Entry): Entry => {
-  const savedTranslation = e.translation ?? "";
-  const updated = { ...e, savedTranslation, translation: e.translation, status: computeStatus({ ...e, savedTranslation }) };
-  updated.status = computeStatus(updated);
-  return updated;
+export const acceptTranslation = (e: IEntry): IEntry => {
+  if (!e.translation) return e;
+
+  return {
+    ...e,
+    savedTranslation: e.translation,
+    originalAtTranslation: e.original,
+    status: "saved",
+  };
 };

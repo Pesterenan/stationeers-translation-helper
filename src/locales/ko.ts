@@ -1,6 +1,6 @@
-import type { TranslationSchema } from "./index.ts";
+import type { TTranslationSchema } from "./index.ts";
 
-export const ko: TranslationSchema = {
+export const ko: TTranslationSchema = {
   app: {
     title: "Stationeers 번역 헬퍼",
     subtitle: "원본 게임 XML 파일을 가져오고, 번역을 편집한 후 새 XML을 내보냅니다",
@@ -41,8 +41,10 @@ export const ko: TranslationSchema = {
     go: "이동",
   },
   importer: {
-    errorPrefix: "원본 게임 파일('english'로 시작) 또는 진행 상황 파일 'english_progress.json'만 허용됩니다.",
+    errorPrefix: "이 파일은 마스터 파일 (English) 이 아닌 것 같습니다.",
+    askMerge: "이 XML에서 번역을 현재 프로젝트로 가져오시겠습니까?",
     errorUnknown: "알 수 없는 파일 형식입니다. .xml 또는 .json을 사용하세요",
+    importHelp: "이미 번역된 파일로 필드를 채우려면 먼저 마스터 파일을 가져온 다음, 번역된 파일을 가져와 항목을 병합하십시오.",
   },
   messages: {
     xmlError: "XML 파싱 오류:",
@@ -51,6 +53,7 @@ export const ko: TranslationSchema = {
     draftRecovered: "로컬 저장소에서 {lang} 임시 저장을 복구했습니다.",
     noXml: "불러온 XML 없음",
     confirmReset: "언어 설정과 불러온 파일이 지워집니다. 계속하시겠습니까?",
+    importSuccess: "번역을 성공적으로 가져왔습니다!",
   },
   translationItem: {
     key: "키:",

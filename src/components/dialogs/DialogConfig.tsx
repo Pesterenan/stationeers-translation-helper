@@ -16,7 +16,7 @@ import {
 import type { SelectChangeEvent } from "@mui/material";
 import * as React from "react";
 import { locales } from "../../locales";
-import type { LocaleKey } from "../../locales";
+import type { TLocaleKey } from "../../locales";
 import { useDialogContext } from "../../context/useDialogContext";
 import { useI18nContext } from "../../context/useI18nContext";
 import { useTranslationContext } from "../../context/useTranslationContext";
@@ -86,7 +86,7 @@ const DialogConfig = () => {
                   labelId="config-ui-lang-select-label"
                   value={locale}
                   label={t('dialogConfig.uiLanguageLabel')}
-                  onChange={(e) => changeLanguage(e.target.value as LocaleKey)}
+                  onChange={(e) => changeLanguage(e.target.value as TLocaleKey)}
                   size="small"
                 >
                   {Object.entries(locales).map(([key, dict]) => (

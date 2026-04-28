@@ -1,11 +1,11 @@
-export type EntryStatus = "unchanged" | "edited" | "saved";
+export type TEntryStatus = "unchanged" | "edited" | "saved";
 
 /**
  * Representa uma unidade atômica de tradução na UI.
  * Diferente da estrutura do XML (onde um Record pode ter Value e Description),
  * aqui separamos cada campo de texto em uma Entry individual para ser exibida num Card.
  */
-export interface Entry {
+export interface IEntry {
   id: string;
   
   /** A chave identificadora do registro no XML (ex: "ApplianceMicrowave"). 
@@ -29,7 +29,7 @@ export interface Entry {
    * Usado para detectar se o arquivo original (English) mudou. */
   originalAtTranslation?: string;
 
-  status?: EntryStatus;
+  status?: TEntryStatus;
 
   /** A seção do XML onde este registro se encontra (ex: "Things", "Reagents", "HelpPage"). */
   section: string;

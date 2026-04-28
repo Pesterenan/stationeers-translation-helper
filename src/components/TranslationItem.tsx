@@ -8,18 +8,18 @@ import Tooltip from "@mui/material/Tooltip";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh"; // New icon for translate
-import type { Entry } from "../types";
+import type { IEntry } from "../types";
 import { Badge, Grid, CircularProgress } from "@mui/material";
 import { translateText, mapLanguageToCode } from "../lib/translationService";
 import { useI18nContext } from "../context/useI18nContext";
 import { useTranslationContext } from "../context/useTranslationContext";
 
-type Props = {
-  entry: Entry;
+interface IProps {
+  entry: IEntry;
   index: number; // Agora obrigatório para navegação correta
   onChange: (id: string, value: string) => void;
   onAccept: (id: string) => void;
-};
+}
 
 const shortcuts = ["y", "u", "i", "o", "p", "Y", "U", "I", "O", "P"];
 
@@ -54,6 +54,7 @@ const OriginalTextDisplay: React.FC<{
           const shortcut = shortcuts[shortcutIndex++];
           return (
             <Badge
+              key={`${i}-${shortcut}`}
               anchorOrigin={{ horizontal: "left", vertical: "top" }}
               badgeContent={shortcut}
               color="info"
@@ -92,7 +93,7 @@ const OriginalTextDisplay: React.FC<{
   );
 };
 
-const TranslationItemInner: React.FC<Props> = ({
+const TranslationItemInner: React.FC<IProps> = ({
   entry,
   index,
   onChange,

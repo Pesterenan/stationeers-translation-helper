@@ -1,11 +1,10 @@
 import { createContext, useContext } from "react";
-import type { Entry, IMetadata } from "../types";
+import type { IEntry, IMetadata } from "../types";
 
-interface TranslationContextType {
-  // State
+export interface ITranslationContextType {
   activeSection: string;
-  categories: Record<string, Entry[]>;
-  entries: Entry[];
+  categories: Record<string, IEntry[]>;
+  entries: IEntry[];
   isLoading: boolean;
   metadata: IMetadata | undefined;
   page: number;
@@ -13,43 +12,39 @@ interface TranslationContextType {
   showAccepted: boolean;
   showEmpty: boolean;
   sections: string[];
+  originalFileName: string;
   xmlDoc: XMLDocument | null;
   sourceVersion: string | null;
   lastAutoSave: Date | null;
-
-  // Stats
   percent: number;
   savedCount: number;
   total: number;
   totalPages: number;
-
-  // Setters
   setMetadata: (meta: IMetadata) => void;
-  setPage: (page: number) => void;
+  setPage: (p: number) => void;
   setSearchTerm: (term: string) => void;
-  setShowAccepted: (hide: boolean) => void;
-  setShowEmpty: (show: boolean) => void;
-
-  // Actions
+  setShowAccepted: (val: boolean) => void;
+  setShowEmpty: (val: boolean) => void;
   acceptEntry: (id: string) => void;
   changeTab: (newValue: string) => void;
   downloadTranslatedXml: () => void;
   exportProgressJson: () => void;
-  loadProgressJson: (jsonText: string) => void;
+  importTranslationsFromXml: (text: string) => void;
+  loadProgressJson: (json: string) => void;
   loadXml: (text: string, fileName?: string, version?: string) => void;
   resetProject: () => void;
   updateEntry: (id: string, value: string) => void;
 }
 
-export const TranslationContext = createContext<TranslationContextType | undefined>(
+export const TranslationContext = createContext<ITranslationContextType | undefined>(
   undefined,
 );
 
 export function useTranslationContext() {
   const context = useContext(TranslationContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error(
-      "useTranslationContext must be used within a TranslationProvider",
+      "useTranslationContext must be used within TranslationProvider",
     );
   }
   return context;

@@ -1,6 +1,6 @@
-import type { TranslationSchema } from "./index.ts";
+import type { TTranslationSchema } from "./index.ts";
 
-export const zh: TranslationSchema = {
+export const zh: TTranslationSchema = {
   app: {
     title: "Stationeers 翻译助手",
     subtitle: "导入原游戏 XML 文件，编辑翻译并导出新的 XML",
@@ -41,8 +41,10 @@ export const zh: TranslationSchema = {
     go: "跳转",
   },
   importer: {
-    errorPrefix: "仅允许原始游戏文件 (以 'english' 开头) 或进度文件 'english_progress.json'。",
+    errorPrefix: "此文件似乎不是主文件 (English)。",
+    askMerge: "您想将此 XML 中的翻译导入当前项目吗？",
     errorUnknown: "未知文件类型。请使用 .xml 或 .json",
+    importHelp: "如果您想使用已翻译的文件填充字段，请先导入主文件，然后再导入翻译文件以合并条目。",
   },
   messages: {
     xmlError: "解析 XML 错误:",
@@ -51,6 +53,7 @@ export const zh: TranslationSchema = {
     draftRecovered: "已从本地存储恢复 {lang} 的草稿。",
     noXml: "未加载 XML",
     confirmReset: "这将清除语言设置和加载的文件。是否继续？",
+    importSuccess: "翻译导入成功！",
   },
   translationItem: {
     key: "键:",

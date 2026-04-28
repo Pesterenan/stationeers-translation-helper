@@ -1,14 +1,14 @@
 
 import { createContext, useContext } from "react";
-import type { LocaleKey, TranslationKeys } from "../locales";
+import type { TLocaleKey, TTranslationKeys } from "../locales";
 
-interface I18nContextType {
-  locale: LocaleKey;
-  t: (path: TranslationKeys, params?: Record<string, string>) => string;
-  changeLanguage: (lang: LocaleKey) => void;
+interface II18nContext {
+  locale: TLocaleKey;
+  t: (path: TTranslationKeys, params?: Record<string, string>) => string;
+  changeLanguage: (lang: TLocaleKey) => void;
 }
 
-export const I18nContext = createContext<I18nContextType | undefined>(undefined);
+export const I18nContext = createContext<II18nContext | undefined>(undefined);
 
 export function useI18nContext() {
   const context = useContext(I18nContext);

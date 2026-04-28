@@ -1,6 +1,6 @@
-import type { TranslationSchema } from "./index.ts";
+import type { TTranslationSchema } from "./index.ts";
 
-export const ja: TranslationSchema = {
+export const ja: TTranslationSchema = {
   app: {
     title: "Stationeers 翻訳ヘルパー",
     subtitle: "元のゲーム XML ファイルをインポートし、翻訳を編集して新しい XML をエクスポートします",
@@ -41,8 +41,10 @@ export const ja: TranslationSchema = {
     go: "移動",
   },
   importer: {
-    errorPrefix: "元のゲームファイル（'english' で始まるもの）または進捗ファイル 'english_progress.json' のみ許可されています。",
+    errorPrefix: "このファイルはマスターファイル (English) ではないようです。",
+    askMerge: "この XML からの翻訳を現在のプロジェクトにインポートしますか？",
     errorUnknown: "不明なファイル形式です。.xml または .json を使用してください",
+    importHelp: "翻訳済みのファイルを使用してフィールドを埋める場合は、まずマスターファイルをインポートし、次に翻訳済みファイルをインポートしてエントリを統合してください。",
   },
   messages: {
     xmlError: "XML 解析エラー:",
@@ -51,6 +53,7 @@ export const ja: TranslationSchema = {
     draftRecovered: "ローカルストレージから {lang} の下書きを復元しました。",
     noXml: "XML が読み込まれていません",
     confirmReset: "言語設定と読み込まれたファイルがクリアされます。続行しますか？",
+    importSuccess: "翻訳のインポートに成功しました！",
   },
   translationItem: {
     key: "キー:",
@@ -61,5 +64,4 @@ export const ja: TranslationSchema = {
     tooltipCopy: "原文をフィールドにコピー (Ctrl+Shift+C)",
     tooltipAccept: "承認 (Ctrl/Cmd + Enter または Ctrl+M)",
   }
-  };
-
+};
