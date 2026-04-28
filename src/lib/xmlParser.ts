@@ -1,4 +1,4 @@
-import { type Entry } from "../types";
+import { type IEntry } from "../types";
 import { v4 as uuidv4 } from "uuid";
 
 // ============================================================================
@@ -70,14 +70,14 @@ function findNodeBySelector(
 // Parsing Logic
 // ============================================================================
 
-interface SectionConfig {
+interface ISectionConfig {
   sectionTag: string; // A tag da seção (ex: "Things", "Reagents")
   recordTag: string; // A tag do item filho (ex: "RecordThing", "RecordReagent")
   translatableFields: string[]; // Os campos que queremos traduzir (ex: ["Value", "Description"])
 }
 
 // Definição explicita da estrutura do Stationeers XML
-const SECTIONS_CONFIG: SectionConfig[] = [
+const SECTIONS_CONFIG: ISectionConfig[] = [
   {
     sectionTag: "Things",
     recordTag: "RecordThing",
@@ -122,7 +122,7 @@ const SECTIONS_CONFIG: SectionConfig[] = [
 ];
 
 export function parseStationeersXml(xmlString: string): {
-  entries: Entry[];
+  entries: IEntry[];
   metadata: Record<string, string | undefined>;
   xmlDocument: XMLDocument;
 } {
@@ -134,7 +134,7 @@ export function parseStationeersXml(xmlString: string): {
   if (parsererror)
     throw new Error("XML parse error: " + parsererror.textContent);
 
-  const entries: Entry[] = [];
+  const entries: IEntry[] = [];
   const root = doc.documentElement;
 
   // 1. Extrair Metadados
@@ -279,7 +279,7 @@ export function parseStationeersXml(xmlString: string): {
 
 export function buildTranslatedStationeersXml(
   doc: XMLDocument,
-  entries: Entry[],
+  entries: IEntry[],
 ): string {
   const docCopy = doc.cloneNode(true) as XMLDocument;
 

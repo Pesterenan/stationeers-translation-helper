@@ -1,4 +1,4 @@
-import React,  { type ChangeEvent } from "react";
+import React, { type ChangeEvent } from "react";
 import Button from "@mui/material/Button";
 import { readFileAsText } from "../lib/fileHelpers";
 import { useI18nContext } from "../context/useI18nContext";

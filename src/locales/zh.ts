@@ -1,6 +1,6 @@
-import type { TranslationSchema } from "./index.ts";
+import type { TTranslationSchema } from "./index.ts";
 
-export const zh: TranslationSchema = {
+export const zh: TTranslationSchema = {
   app: {
     title: "Stationeers 翻译助手",
     subtitle: "导入原游戏 XML 文件，编辑翻译并导出新的 XML",

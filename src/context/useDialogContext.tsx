@@ -1,14 +1,22 @@
 import { createContext, useContext } from "react";
 
-export type DialogType = "GOTO_PAGE" | "METADATA" | "CONFIG" | null;
+export type TDialogType = "ALERT" | "GOTO_PAGE" | "METADATA" | "CONFIG" | null;
 
-export interface DialogContextType {
-  activeDialog: DialogType;
-  openDialog: (type: DialogType) => void;
-  closeDialog: () => void;
+export interface IAlertConfig {
+  title: string;
+  content: React.ReactNode;
+  resolve: () => void;
 }
 
-export const DialogContext = createContext<DialogContextType | undefined>(undefined);
+export interface IDialogContextType {
+  activeDialog: TDialogType;
+  alertConfig: IAlertConfig | null;
+  openDialog: (type: TDialogType) => void;
+  closeDialog: () => void;
+  showAlert: (title: string, content: React.ReactNode) => Promise<void>;
+}
+
+export const DialogContext = createContext<IDialogContextType | undefined>(undefined);
 
 export function useDialogContext() {
   const context = useContext(DialogContext);

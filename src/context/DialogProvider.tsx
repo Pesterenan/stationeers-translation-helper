@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
-import { DialogContext, type DialogType } from "./useDialogContext";
+import { DialogContext, type IAlertConfig, type TDialogType } from "./useDialogContext";
 
 export function DialogProvider({ children }: { children: ReactNode }) {
-  const [activeDialog, setActiveDialog] = useState<DialogType>(null);
+  const [activeDialog, setActiveDialog] = useState<TDialogType>(null);
 
-  const openDialog = useCallback((type: DialogType) => {
+  const openDialog = useCallback((type: TDialogType) => {
     setActiveDialog(type);
   }, []);
 

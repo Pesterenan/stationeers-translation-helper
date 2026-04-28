@@ -1,6 +1,6 @@
-import type { TranslationSchema } from "./index.ts";
+import type { TTranslationSchema } from "./index.ts";
 
-export const ru: TranslationSchema = {
+export const ru: TTranslationSchema = {
   app: {
     title: "Stationeers Translation Helper",
     subtitle: "Импортируйте оригинальный XML-файл игры, отредактируйте переводы и экспортируйте новый XML",

@@ -1,6 +1,6 @@
-import type { TranslationSchema } from "./index.ts";
+import type { TTranslationSchema } from "./index.ts";
 
-export const ko: TranslationSchema = {
+export const ko: TTranslationSchema = {
   app: {
     title: "Stationeers 번역 헬퍼",
     subtitle: "원본 게임 XML 파일을 가져오고, 번역을 편집한 후 새 XML을 내보냅니다",

@@ -5,7 +5,7 @@ import React, {
   useEffect,
   type ReactNode,
 } from "react";
-import { type Entry, type IMetadata } from "../types";
+import { type IEntry, type IMetadata } from "../types";
 import {
   parseStationeersXml,
   buildTranslatedStationeersXml,
@@ -21,7 +21,7 @@ import { useI18nContext } from "./useI18nContext";
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const { t } = useI18nContext();
-  const [entries, setEntries] = useState<Entry[]>([]);
+  const [entries, setEntries] = useState<IEntry[]>([]);
   const [xmlDoc, setXmlDoc] = useState<XMLDocument | null>(null);
   const [metadata, setMetadata] = useState<IMetadata | undefined>(() => {
     const saved = localStorage.getItem("sth_config");
@@ -67,7 +67,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
   // Group entries by section (Memoized: only re-runs when entries change)
   const groupedEntries = useMemo(() => {
-    return entries.reduce<Record<string, Entry[]>>((acc, entry) => {
+    return entries.reduce<Record<string, IEntry[]>>((acc, entry) => {
       const key = entry.section;
       if (!acc[key]) acc[key] = [];
       acc[key].push(entry);
@@ -79,7 +79,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const categories = useMemo(() => {
     const lowerTerm = searchTerm.toLowerCase();
     const isSearchActive = searchTerm.length > 2;
-    const result: Record<string, Entry[]> = {};
+    const result: Record<string, IEntry[]> = {};
 
     Object.entries(groupedEntries).forEach(([section, sectionEntries]) => {
       const matches = sectionEntries.filter((entry) => {
@@ -197,7 +197,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
         // Priority: 1. Current sth_config (manually set), 2. XML metadata
         // If we have a Language in sth_config, we assume this is the target project.
-        const finalMeta = {
+        const finalMeta: IMetadata = {
           Language: metadata?.Language || xmlMeta.Language,
           Code: metadata?.Code || xmlMeta.Code,
           Font: metadata?.Font || xmlMeta.Font,
@@ -235,7 +235,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           }
         }
 
-        const initialized = parsedEntries.map((e) => {
+        const initialized: IEntry[] = parsedEntries.map((e) => {
           const combinedKey = `${e.section}|${e.key}`;
           const draftEntry = draftTranslations[combinedKey];
 
