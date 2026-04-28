@@ -1,11 +1,11 @@
 import { createContext, useContext } from "react";
 
-export type TDialogType = "ALERT" | "GOTO_PAGE" | "METADATA" | "CONFIG" | null;
+export type TDialogType = "ALERT" | "CONFIRM" | "GOTO_PAGE" | "METADATA" | "CONFIG" | null;
 
 export interface IAlertConfig {
-  title: React.ReactNode;
+  title: string;
   content: React.ReactNode;
-  resolve: () => void;
+  resolve: (value: boolean) => void;
 }
 
 export interface IDialogContextType {
@@ -14,6 +14,7 @@ export interface IDialogContextType {
   openDialog: (type: TDialogType) => void;
   closeDialog: () => void;
   showAlert: (title: string, content: React.ReactNode) => Promise<void>;
+  showConfirm: (title: string, content: React.ReactNode) => Promise<boolean>;
 }
 
 export const DialogContext = createContext<IDialogContextType | undefined>(undefined);

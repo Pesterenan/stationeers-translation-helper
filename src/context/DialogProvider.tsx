@@ -16,14 +16,21 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 
   const showAlert = useCallback((title: string, content: React.ReactNode) => {
     return new Promise<void>((resolve) => {
-      setAlertConfig({ title, content, resolve });
+      setAlertConfig({ title, content, resolve: () => resolve() });
       setActiveDialog("ALERT");
     });
   }, []);
 
+  const showConfirm = useCallback((title: string, content: React.ReactNode) => {
+    return new Promise<boolean>((resolve) => {
+      setAlertConfig({ title, content, resolve });
+      setActiveDialog("CONFIRM");
+    });
+  }, []);
+
   const value = useMemo(
-    () => ({ activeDialog, alertConfig, openDialog, closeDialog, showAlert }),
-    [activeDialog, alertConfig, openDialog, closeDialog, showAlert]
+    () => ({ activeDialog, alertConfig, openDialog, closeDialog, showAlert, showConfirm }),
+    [activeDialog, alertConfig, openDialog, closeDialog, showAlert, showConfirm]
   );
 
   return (

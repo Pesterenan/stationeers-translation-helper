@@ -4,13 +4,13 @@ import { readFileAsText } from "../lib/fileHelpers";
 import { useI18nContext } from "../context/useI18nContext";
 import { useDialogContext } from "../context/useDialogContext";
 
-type Props = {
+interface IProps {
   onXml: (fileText: string, fileName?: string, version?: string) => void;
   onProgressJson: (jsonText: string) => void;
   onStart?: () => void;
-};
+}
 
-const FileImporter: React.FC<Props> = ({ onXml, onProgressJson, onStart }) => {
+const FileImporter: React.FC<IProps> = ({ onXml, onProgressJson, onStart }) => {
   const { t } = useI18nContext();
   const { showAlert } = useDialogContext();
 
