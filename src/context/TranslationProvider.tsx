@@ -18,9 +18,11 @@ import {
 } from "../lib/entryHelpers";
 import { TranslationContext } from "./useTranslationContext";
 import { useI18nContext } from "./useI18nContext";
+import { useDialogContext } from "./useDialogContext";
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const { t } = useI18nContext();
+  const { showAlert } = useDialogContext();
   const [entries, setEntries] = useState<IEntry[]>([]);
   const [xmlDoc, setXmlDoc] = useState<XMLDocument | null>(null);
   const [metadata, setMetadata] = useState<IMetadata | undefined>(() => {
@@ -187,7 +189,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   // Actions
   const loadXml = useCallback((text: string, fileName?: string, version?: string) => {
     setIsLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         const {
           entries: parsedEntries,
@@ -273,12 +275,12 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       } catch (err: unknown) {
         console.error(t('messages.xmlError'), err);
         const message = err instanceof Error ? err.message : String(err);
-        alert(t('messages.xmlError') + " " + message);
+        await showAlert(t('app.title'), t('messages.xmlError') + " " + message);
       } finally {
         setIsLoading(false);
       }
     }, 600); // 600ms para aguardar animação da UI
-  }, [getStorageKey, metadata, t]);
+  }, [getStorageKey, metadata, t, showAlert]);
 
 
   // Load mock data on development
@@ -302,7 +304,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
   const loadProgressJson = useCallback((jsonText: string) => {
     setIsLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         const obj = JSON.parse(jsonText);
         const translations: Record<string, string | { translation: string, original: string }> = obj.translations ?? {};
@@ -338,14 +340,15 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         console.error(t('messages.jsonError'), err);
-        alert(
+        await showAlert(
+          t('app.title'),
           t('messages.jsonError') + " " + message,
         );
       } finally {
         setIsLoading(false);
       }
     }, 600);
-  }, [t]);
+  }, [t, showAlert]);
 
   const updateEntry = useCallback((id: string, value: string) => {
     setEntries((prev) =>
@@ -399,10 +402,13 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     );
   }, [entries, metadata, originalFileName, sourceVersion]);
 
-  const downloadTranslatedXml = useCallback(() => {
-    if (!xmlDoc) return alert(t('messages.noXml'));
+  const downloadTranslatedXml = useCallback(async () => {
+    if (!xmlDoc) {
+      await showAlert(t('app.title'), t('messages.noXml'));
+      return;
+    }
     setIsLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         let docToUse = xmlDoc;
         if (metadata) {
@@ -435,12 +441,12 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       } catch (err: unknown) {
         console.error(t('messages.exportError'), err);
         const message = err instanceof Error ? err.message : String(err);
-        alert(t('messages.exportError') + " " + message);
+        await showAlert(t('app.title'), t('messages.exportError') + " " + message);
       } finally {
         setIsLoading(false);
       }
     }, 600);
-  }, [xmlDoc, metadata, entries, originalFileName, t]);
+  }, [xmlDoc, metadata, entries, originalFileName, t, showAlert]);
 
   const changeTab = useCallback((newValue: string) => {
     setActiveSection(newValue);

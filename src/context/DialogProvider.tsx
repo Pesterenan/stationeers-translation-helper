@@ -3,6 +3,7 @@ import { DialogContext, type IAlertConfig, type TDialogType } from "./useDialogC
 
 export function DialogProvider({ children }: { children: ReactNode }) {
   const [activeDialog, setActiveDialog] = useState<TDialogType>(null);
+  const [alertConfig, setAlertConfig] = useState<IAlertConfig | null>(null);
 
   const openDialog = useCallback((type: TDialogType) => {
     setActiveDialog(type);
@@ -10,11 +11,19 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 
   const closeDialog = useCallback(() => {
     setActiveDialog(null);
+    setAlertConfig(null);
+  }, []);
+
+  const showAlert = useCallback((title: string, content: React.ReactNode) => {
+    return new Promise<void>((resolve) => {
+      setAlertConfig({ title, content, resolve });
+      setActiveDialog("ALERT");
+    });
   }, []);
 
   const value = useMemo(
-    () => ({ activeDialog, openDialog, closeDialog }),
-    [activeDialog, openDialog, closeDialog]
+    () => ({ activeDialog, alertConfig, openDialog, closeDialog, showAlert }),
+    [activeDialog, alertConfig, openDialog, closeDialog, showAlert]
   );
 
   return (

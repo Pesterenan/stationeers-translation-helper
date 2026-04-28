@@ -3,7 +3,7 @@ import { createContext, useContext } from "react";
 export type TDialogType = "ALERT" | "GOTO_PAGE" | "METADATA" | "CONFIG" | null;
 
 export interface IAlertConfig {
-  title: string;
+  title: React.ReactNode;
   content: React.ReactNode;
   resolve: () => void;
 }
