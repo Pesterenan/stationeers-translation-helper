@@ -22,7 +22,7 @@ import { useDialogContext } from "./useDialogContext";
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const { t } = useI18nContext();
-  const { showAlert } = useDialogContext();
+  const { showAlert, showConfirm } = useDialogContext();
   const [entries, setEntries] = useState<IEntry[]>([]);
   const [xmlDoc, setXmlDoc] = useState<XMLDocument | null>(null);
   const [metadata, setMetadata] = useState<IMetadata | undefined>(() => {
@@ -493,8 +493,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     setPage(1);
   }, []);
 
-  const resetProject = useCallback(() => {
-    if (confirm(t('messages.confirmReset'))) {
+  const resetProject = useCallback(async () => {
+    if (await showConfirm(t('app.title'), t('messages.confirmReset'))) {
       setEntries([]);
       setXmlDoc(null);
       setMetadata(undefined);
@@ -503,7 +503,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       setPage(1);
       setActiveSection("");
     }
-  }, [t]);
+  }, [t, showConfirm]);
 
   const value = useMemo(
     () => ({
@@ -552,6 +552,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       showEmpty,
       sections,
       xmlDoc,
+      originalFileName,
       sourceVersion,
       lastAutoSave,
       percent,

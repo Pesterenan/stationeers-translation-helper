@@ -15,7 +15,7 @@ const DialogAlert = () => {
 
   const handleAlertDismiss = () => {
     if (alertConfig?.resolve) {
-      alertConfig.resolve();
+      alertConfig.resolve(true);
     }
     closeDialog();
   };
