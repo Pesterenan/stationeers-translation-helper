@@ -350,6 +350,46 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     }, 600);
   }, [t, showAlert]);
 
+  const importTranslationsFromXml = useCallback((xmlText: string) => {
+    setIsLoading(true);
+    setTimeout(async () => {
+      try {
+        const { entries: importedEntries } = parseStationeersXml(xmlText);
+        
+        // Criar um mapa para busca rápida: "section|key" -> originalText (que é a tradução no arquivo importado)
+        const translationMap = new Map<string, string>();
+        importedEntries.forEach(e => {
+          translationMap.set(`${e.section}|${e.key}`, e.original);
+        });
+
+        setEntries((prev) => 
+          prev.map(e => {
+            const key = `${e.section}|${e.key}`;
+            const importedTranslation = translationMap.get(key);
+            
+            if (importedTranslation && importedTranslation.trim() !== "") {
+              return {
+                ...e,
+                translation: importedTranslation,
+                savedTranslation: importedTranslation,
+                status: "saved" as const,
+                originalAtTranslation: e.original
+              };
+            }
+            return e;
+          })
+        );
+
+        await showAlert(t('app.title'), t('messages.importSuccess'));
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        await showAlert(t('app.title'), t('messages.xmlError') + " " + message);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 600);
+  }, [t, showAlert]);
+
   const updateEntry = useCallback((id: string, value: string) => {
     setEntries((prev) =>
       prev.map((e) => (e.id === id ? updateTranslationHelper(e, value) : e)),
@@ -467,36 +507,38 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      acceptEntry,
       activeSection,
       categories,
+      changeTab,
+      downloadTranslatedXml,
       entries,
+      exportProgressJson,
+      importTranslationsFromXml,
       isLoading,
-      metadata,
-      page,
-      searchTerm,
-      showAccepted,
-      showEmpty,
-      sections,
-      xmlDoc,
-      sourceVersion,
       lastAutoSave,
+      loadProgressJson,
+      loadXml,
+      metadata,
+      originalFileName,
+      page,
       percent,
+      resetProject,
       savedCount,
-      total,
-      totalPages,
+      searchTerm,
+      sections,
       setMetadata,
       setPage,
       setSearchTerm,
       setShowAccepted,
       setShowEmpty,
-      acceptEntry,
-      changeTab,
-      downloadTranslatedXml,
-      exportProgressJson,
-      loadProgressJson,
-      loadXml,
-      resetProject,
+      showAccepted,
+      showEmpty,
+      sourceVersion,
+      total,
+      totalPages,
       updateEntry,
+      xmlDoc,
     }),
     [
       activeSection,
@@ -520,6 +562,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       changeTab,
       downloadTranslatedXml,
       exportProgressJson,
+      importTranslationsFromXml,
       loadProgressJson,
       loadXml,
       resetProject,

@@ -1,7 +1,6 @@
 import { createContext, useContext } from "react";
 import type { IEntry, IMetadata } from "../types";
 
-  // State
 export interface ITranslationContextType {
   activeSection: string;
   categories: Record<string, IEntry[]>;
@@ -13,27 +12,24 @@ export interface ITranslationContextType {
   showAccepted: boolean;
   showEmpty: boolean;
   sections: string[];
+  originalFileName: string;
   xmlDoc: XMLDocument | null;
   sourceVersion: string | null;
   lastAutoSave: Date | null;
-
-  // Stats
   percent: number;
   savedCount: number;
   total: number;
   totalPages: number;
-
-  // Setters
   setMetadata: (meta: IMetadata) => void;
   setPage: (p: number) => void;
   setSearchTerm: (term: string) => void;
-  // Actions
   setShowAccepted: (val: boolean) => void;
   setShowEmpty: (val: boolean) => void;
   acceptEntry: (id: string) => void;
   changeTab: (newValue: string) => void;
   downloadTranslatedXml: () => void;
   exportProgressJson: () => void;
+  importTranslationsFromXml: (text: string) => void;
   loadProgressJson: (json: string) => void;
   loadXml: (text: string, fileName?: string, version?: string) => void;
   resetProject: () => void;

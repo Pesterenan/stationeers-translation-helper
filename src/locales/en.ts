@@ -41,8 +41,10 @@ export const en: TTranslationSchema = {
     go: "Go",
   },
   importer: {
-    errorPrefix: "Only original game files (starting with 'english') or progress files 'english_progress.json' are allowed.",
+    errorPrefix: "This file does not appear to be a master file (English).",
+    askMerge: "Would you like to import translations from this XML into the current project?",
     errorUnknown: "Unknown file type. Use .xml or .json",
+    importHelp: "If you want to fill the fields with an already translated file, first import a master file, and then the translated file to merge the entries.",
   },
   messages: {
     xmlError: "Error parsing XML:",
@@ -51,6 +53,7 @@ export const en: TTranslationSchema = {
     draftRecovered: "Draft for {lang} recovered from LocalStorage.",
     noXml: "No XML loaded",
     confirmReset: "This will clear the language settings and the loaded file. Do you want to continue?",
+    importSuccess: "Translations imported successfully!",
   },
   translationItem: {
     key: "Key:",

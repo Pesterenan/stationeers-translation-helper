@@ -41,8 +41,10 @@ export const ru: TTranslationSchema = {
     go: "Перейти",
   },
   importer: {
-    errorPrefix: "Разрешены только оригинальные файлы игры (начинающиеся с 'english') или файлы прогресса 'english_progress.json'.",
+    errorPrefix: "Этот файл не похож на мастер-файл (английский).",
+    askMerge: "Хотите импортировать переводы из этого XML в текущий проект?",
     errorUnknown: "Неизвестный тип файла. Используйте .xml или .json",
+    importHelp: "Если вы хотите заполнить поля данными из уже переведенного файла, сначала импортируйте основной файл (master file), а затем переведенный файл для объединения записей.",
   },
   messages: {
     xmlError: "Ошибка парсинга XML:",
@@ -51,6 +53,7 @@ export const ru: TTranslationSchema = {
     draftRecovered: "Черновик для {lang} восстановлен из локального хранилища.",
     noXml: "XML не загружен",
     confirmReset: "Это очистит настройки языка и загруженный файл. Продолжить?",
+    importSuccess: "Переводы успешно импортированы!",
   },
   translationItem: {
     key: "Ключ:",

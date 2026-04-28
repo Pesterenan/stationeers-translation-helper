@@ -39,8 +39,10 @@ export const ptBR = {
     go: "Ir",
   },
   importer: {
-    errorPrefix: "Apenas arquivos originais do jogo (começando com 'english') ou arquivos de progresso 'english_progress.json' são permitidos.",
+    askMerge: "Deseja importar as traduções deste XML para o projeto atual?",
+    errorPrefix: "Este arquivo não parece ser um arquivo mestre (English).",
     errorUnknown: "Tipo de arquivo desconhecido. Use .xml ou .json",
+    importHelp: "Se quer preencher os campos com um arquivo já traduzido, primeiro importe um arquivo mestre, e depois o arquivo traduzido para mesclar as entradas.",
   },
   messages: {
     xmlError: "Erro ao parsear XML:",
@@ -49,6 +51,7 @@ export const ptBR = {
     draftRecovered: "Rascunho para {lang} recuperado do LocalStorage.",
     noXml: "Nenhum XML carregado",
     confirmReset: "Isso irá limpar as configurações do idioma e o arquivo carregado. Deseja continuar?",
+    importSuccess: "Traduções importadas com sucesso!",
   },
   translationItem: {
     key: "Chave:",
