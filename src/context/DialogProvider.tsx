@@ -16,7 +16,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 
   const showAlert = useCallback((title: string, content: React.ReactNode) => {
     return new Promise<void>((resolve) => {
-      setAlertConfig({ title, content, resolve: () => resolve() });
+      setAlertConfig({ title, content, resolve: (_: boolean) => resolve() });
       setActiveDialog("ALERT");
     });
   }, []);
