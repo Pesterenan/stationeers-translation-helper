@@ -516,8 +516,6 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       savedCount,
       total,
       totalPages,
-      // Actions que são estáveis (useCallback) não precisam entrar no deps array
-      // se quisermos ser puristas, mas é seguro listar.
       acceptEntry,
       changeTab,
       downloadTranslatedXml,

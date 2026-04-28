@@ -54,6 +54,7 @@ const OriginalTextDisplay: React.FC<{
           const shortcut = shortcuts[shortcutIndex++];
           return (
             <Badge
+              key={`${i}-${shortcut}`}
               anchorOrigin={{ horizontal: "left", vertical: "top" }}
               badgeContent={shortcut}
               color="info"
