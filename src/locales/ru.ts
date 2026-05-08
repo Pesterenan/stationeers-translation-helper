@@ -15,6 +15,8 @@ export const ru: TTranslationSchema = {
     searchTooltip: "Введите более 3 букв для поиска",
     showAccepted: "Показать принятые записи",
     showEmpty: "Показать пустые записи",
+    regexLabel: "RegEx",
+    regexTooltip: "Поиск с использованием регулярного выражения",
     totalProgress: "Общий прогресс",
     draftSaved: "Черновик сохранен в",
   },

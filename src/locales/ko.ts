@@ -15,6 +15,8 @@ export const ko: TTranslationSchema = {
     searchTooltip: "검색하려면 3글자 이상 입력하세요",
     showAccepted: "승인된 항목 표시",
     showEmpty: "비어 있는 항목 표시",
+    regexLabel: "RegEx",
+    regexTooltip: "정규 표현식으로 검색",
     totalProgress: "전체 진행 상황",
     draftSaved: "임시 저장 시간:",
   },

@@ -11,6 +11,7 @@ export interface ITranslationContextType {
   searchTerm: string;
   showAccepted: boolean;
   showEmpty: boolean;
+  useRegex: boolean;
   sections: string[];
   originalFileName: string;
   xmlDoc: XMLDocument | null;
@@ -25,6 +26,7 @@ export interface ITranslationContextType {
   setSearchTerm: (term: string) => void;
   setShowAccepted: (val: boolean) => void;
   setShowEmpty: (val: boolean) => void;
+  setUseRegex: (val: boolean) => void;
   acceptEntry: (id: string) => void;
   changeTab: (newValue: string) => void;
   downloadTranslatedXml: () => void;

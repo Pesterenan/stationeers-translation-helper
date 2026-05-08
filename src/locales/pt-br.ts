@@ -13,6 +13,8 @@ export const ptBR = {
     searchTooltip: "Digite mais que 3 letras do que está procurando para pesquisar",
     showAccepted: "Mostrar entradas aceitas",
     showEmpty: "Mostrar entradas vazias",
+    regexLabel: "RegEx",
+    regexTooltip: "Buscar usando Expressão Regular",
     totalProgress: "Progresso Total",
     draftSaved: "Rascunho salvo às",
   },

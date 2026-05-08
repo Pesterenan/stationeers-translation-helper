@@ -15,6 +15,8 @@ export const zh: TTranslationSchema = {
     searchTooltip: "输入超过 3 个字母进行搜索",
     showAccepted: "显示已接受的条目",
     showEmpty: "显示空条目",
+    regexLabel: "RegEx",
+    regexTooltip: "使用正则表达式搜索",
     totalProgress: "总进度",
     draftSaved: "草稿保存于",
   },

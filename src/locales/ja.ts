@@ -15,6 +15,8 @@ export const ja: TTranslationSchema = {
     searchTooltip: "検索するには3文字以上入力してください",
     showAccepted: "承認済みを表示",
     showEmpty: "空の項目を表示",
+    regexLabel: "RegEx",
+    regexTooltip: "正規表現で検索",
     totalProgress: "全体進捗",
     draftSaved: "下書き保存時刻:",
   },

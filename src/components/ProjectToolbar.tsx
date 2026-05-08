@@ -15,7 +15,7 @@ import {
   useTheme,
 } from "@mui/material";
 import FileImporter from "./FileImporter";
-import { Search, Settings } from "@mui/icons-material";
+import { Code, Search, Settings } from "@mui/icons-material";
 import { useDialogContext } from "../context/useDialogContext";
 import { useI18nContext } from "../context/useI18nContext";
 import { useTranslationContext } from "../context/useTranslationContext";
@@ -29,6 +29,7 @@ const ProjectToolbar: React.FC = () => {
     searchTerm,
     showAccepted,
     showEmpty,
+    useRegex,
     total,
     lastAutoSave,
     downloadTranslatedXml,
@@ -37,6 +38,7 @@ const ProjectToolbar: React.FC = () => {
     setSearchTerm,
     setShowAccepted,
     setShowEmpty,
+    setUseRegex,
     loadXml,
   } = useTranslationContext();
   const { openDialog } = useDialogContext();
@@ -173,6 +175,23 @@ const ProjectToolbar: React.FC = () => {
                 <Typography variant="body2" sx={{ userSelect: 'none' }}>
                   {t('toolbar.showEmpty')}
                 </Typography>
+              }
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={useRegex}
+                  onChange={(e) => setUseRegex(e.target.checked)}
+                  size="small"
+                />
+              }
+              label={
+                <Tooltip title={t('toolbar.regexTooltip')}>
+                  <Typography variant="body2" sx={{ userSelect: 'none', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Code fontSize="small" />
+                    {t('toolbar.regexLabel')}
+                  </Typography>
+                </Tooltip>
               }
             />
           </Grid>

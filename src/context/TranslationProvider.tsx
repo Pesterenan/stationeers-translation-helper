@@ -42,6 +42,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [showAccepted, setShowAccepted] = useState<boolean>(true);
   const [showEmpty, setShowEmpty] = useState<boolean>(false);
+  const [useRegex, setUseRegex] = useState<boolean>(false);
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
 
   // Helper to get storage key
@@ -79,7 +80,6 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
   // Filter categories based on search term AND hideAccepted
   const categories = useMemo(() => {
-    const lowerTerm = searchTerm.toLowerCase();
     const isSearchActive = searchTerm.length > 2;
     const result: Record<string, IEntry[]> = {};
 
@@ -95,13 +95,24 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
         // Then, check search if active
         if (isSearchActive) {
-          const matchKey = entry.key.toLowerCase().includes(lowerTerm);
-          const matchOriginal = entry.original.toLowerCase().includes(lowerTerm);
-          const matchTranslation = entry.savedTranslation
-            ?.toLowerCase()
-            .includes(lowerTerm);
-
-          return matchKey || matchOriginal || matchTranslation;
+          let matched = false;
+          if (useRegex) {
+            try {
+              const regex = new RegExp(searchTerm, 'i');
+              matched = regex.test(entry.key)
+                || regex.test(entry.original)
+                || (entry.savedTranslation != null && regex.test(entry.savedTranslation));
+            } catch {
+              // Invalid RegEx — treat as no match
+              matched = false;
+            }
+          } else {
+            const lowerTerm = searchTerm.toLowerCase();
+            matched = entry.key.toLowerCase().includes(lowerTerm)
+              || entry.original.toLowerCase().includes(lowerTerm)
+              || (entry.savedTranslation?.toLowerCase().includes(lowerTerm) ?? false);
+          }
+          return matched;
         }
 
         return true;
@@ -532,8 +543,10 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       setSearchTerm,
       setShowAccepted,
       setShowEmpty,
+      setUseRegex,
       showAccepted,
       showEmpty,
+      useRegex,
       sourceVersion,
       total,
       totalPages,
@@ -550,6 +563,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       searchTerm,
       showAccepted,
       showEmpty,
+      useRegex,
       sections,
       xmlDoc,
       originalFileName,

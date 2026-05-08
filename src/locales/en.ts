@@ -15,6 +15,8 @@ export const en: TTranslationSchema = {
     searchTooltip: "Type more than 3 letters of what you are looking for to search",
     showAccepted: "Show accepted entries",
     showEmpty: "Show empty entries",
+    regexLabel: "RegEx",
+    regexTooltip: "Search using Regular Expression",
     totalProgress: "Total Progress",
     draftSaved: "Draft saved at",
   },
