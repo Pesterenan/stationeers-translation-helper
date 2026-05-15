@@ -30,6 +30,7 @@ const ProjectToolbar: React.FC = () => {
     showAccepted,
     showEmpty,
     useRegex,
+    regexError,
     total,
     lastAutoSave,
     downloadTranslatedXml,
@@ -130,6 +131,7 @@ const ProjectToolbar: React.FC = () => {
           size={{ xs: 12, lg: "grow" }}>
             <TextField
               id="search"
+              helperText={useRegex && regexError ? ` ${regexError}` : undefined}
               slotProps={{
                 input: {
                   endAdornment: (
@@ -141,7 +143,16 @@ const ProjectToolbar: React.FC = () => {
                   ),
                   placeholder: t('toolbar.searchPlaceholder'),
                   size: "small",
-                  sx: { borderRadius: "100px", width: 250 },
+                  sx: {
+                    borderRadius: "100px",
+                    width: 250,
+                    border: '1px solid',
+                    borderColor: useRegex ? (theme) => theme.palette.success.main : undefined,
+                    '&:hover': {
+                      borderColor: useRegex ? (theme) => theme.palette.success.dark : undefined,
+                    },
+                    transition: 'border-color 0.2s ease',
+                  },
                 },
               }}
               onChange={(event) => setLocalSearchText(event.currentTarget.value)}
