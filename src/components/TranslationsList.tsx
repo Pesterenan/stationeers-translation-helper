@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import Grid from "@mui/material/Grid";
-import TranslationItem from "./TranslationItem";
 import { useTranslationContext } from "../context/useTranslationContext";
+import TranslationEntry from "./translationEntry/TranslationEntry";
 
 const TranslationsList: React.FC = () => {
   const { categories, activeSection, page, updateEntry, acceptEntry } =
@@ -30,7 +30,7 @@ const TranslationsList: React.FC = () => {
             }
           }}
         >
-          <TranslationItem
+          <TranslationEntry
             entry={e}
             index={idx}
             onChange={updateEntry}

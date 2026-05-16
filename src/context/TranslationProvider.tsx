@@ -43,7 +43,22 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [showAccepted, setShowAccepted] = useState<boolean>(true);
   const [showEmpty, setShowEmpty] = useState<boolean>(false);
   const [useRegex, setUseRegex] = useState<boolean>(false);
+  const [regexError, setRegexError] = useState<string | null>(null);
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
+
+  // Validate RegEx and expose compiled regex for highlighting
+  const { compiledRegex, regexError: validatedRegexError } = useMemo(() => {
+    if (!useRegex || searchTerm.length === 0) {
+      return { compiledRegex: null as RegExp | null, regexError: null as string | null };
+    }
+    try {
+      const regex = new RegExp(searchTerm, 'gi');
+      return { compiledRegex: regex, regexError: null };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Invalid regular expression';
+      return { compiledRegex: null, regexError: message };
+    }
+  }, [searchTerm, useRegex]);
 
   // Helper to get storage key
   const getStorageKey = useCallback((lang?: string, code?: string, fileName?: string) => {
@@ -96,16 +111,10 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         // Then, check search if active
         if (isSearchActive) {
           let matched = false;
-          if (useRegex) {
-            try {
-              const regex = new RegExp(searchTerm, 'i');
-              matched = regex.test(entry.key)
-                || regex.test(entry.original)
-                || (entry.savedTranslation != null && regex.test(entry.savedTranslation));
-            } catch {
-              // Invalid RegEx — treat as no match
-              matched = false;
-            }
+          if (useRegex && compiledRegex) {
+            matched = compiledRegex.test(entry.key)
+              || compiledRegex.test(entry.original)
+              || (entry.savedTranslation != null && compiledRegex.test(entry.savedTranslation));
           } else {
             const lowerTerm = searchTerm.toLowerCase();
             matched = entry.key.toLowerCase().includes(lowerTerm)
@@ -124,7 +133,12 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     });
 
     return result;
-  }, [groupedEntries, searchTerm, showEmpty, showAccepted]);
+  }, [searchTerm, groupedEntries, showAccepted, showEmpty, useRegex, compiledRegex]);
+
+  // Sync validated regex error to state
+  useEffect(() => {
+    setRegexError(validatedRegexError);
+  }, [validatedRegexError]);
 
   // Pagination & Navigation
   const [page, setPage] = useState<number>(1);
@@ -366,18 +380,18 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     setTimeout(async () => {
       try {
         const { entries: importedEntries } = parseStationeersXml(xmlText);
-        
+
         // Criar um mapa para busca rápida: "section|key" -> originalText (que é a tradução no arquivo importado)
         const translationMap = new Map<string, string>();
         importedEntries.forEach(e => {
           translationMap.set(`${e.section}|${e.key}`, e.original);
         });
 
-        setEntries((prev) => 
+        setEntries((prev) =>
           prev.map(e => {
             const key = `${e.section}|${e.key}`;
             const importedTranslation = translationMap.get(key);
-            
+
             if (importedTranslation && importedTranslation.trim() !== "") {
               return {
                 ...e,
@@ -540,6 +554,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       sections,
       setMetadata,
       setPage,
+      setRegexError,
       setSearchTerm,
       setShowAccepted,
       setShowEmpty,
@@ -547,6 +562,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       showAccepted,
       showEmpty,
       useRegex,
+      regexError,
+      compiledRegex,
       sourceVersion,
       total,
       totalPages,
@@ -554,34 +571,36 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       xmlDoc,
     }),
     [
+      acceptEntry,
       activeSection,
       categories,
+      changeTab,
+      downloadTranslatedXml,
       entries,
+      exportProgressJson,
+      importTranslationsFromXml,
       isLoading,
+      lastAutoSave,
+      loadProgressJson,
+      loadXml,
       metadata,
+      originalFileName,
       page,
+      percent,
+      resetProject,
+      savedCount,
       searchTerm,
+      sections,
       showAccepted,
       showEmpty,
       useRegex,
-      sections,
-      xmlDoc,
-      originalFileName,
+      regexError,
+      compiledRegex,
       sourceVersion,
-      lastAutoSave,
-      percent,
-      savedCount,
       total,
       totalPages,
-      acceptEntry,
-      changeTab,
-      downloadTranslatedXml,
-      exportProgressJson,
-      importTranslationsFromXml,
-      loadProgressJson,
-      loadXml,
-      resetProject,
       updateEntry,
+      xmlDoc,
     ],
   );
   return (

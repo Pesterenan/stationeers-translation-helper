@@ -2,152 +2,81 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useTheme, alpha } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Tooltip from "@mui/material/Tooltip";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import CheckIcon from "@mui/icons-material/Check";
-import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh"; // New icon for translate
-import type { IEntry } from "../types";
-import { Badge, Grid, CircularProgress } from "@mui/material";
-import { translateText, mapLanguageToCode } from "../lib/translationService";
-import { useI18nContext } from "../context/useI18nContext";
-import { useTranslationContext } from "../context/useTranslationContext";
+import { Grid, CircularProgress, type GridSize } from "@mui/material";
+import { useI18nContext } from "../../context/useI18nContext";
+import { useTranslationContext } from "../../context/useTranslationContext";
+import { useRegexHighlight } from "../../hooks/useRegexHighlight";
+import { mapLanguageToCode, translateText } from "../../lib/translationService";
+import type { IEntry } from "../../types";
+import ActionButtons from "./ActionButtons";
+import OriginalText from "./OriginalText";
 
 interface IProps {
   entry: IEntry;
-  index: number; // Agora obrigatório para navegação correta
+  index: number;
   onChange: (id: string, value: string) => void;
   onAccept: (id: string) => void;
 }
 
-const shortcuts = ["y", "u", "i", "o", "p", "Y", "U", "I", "O", "P"];
-
-/**
- * Componente interno para renderizar o texto original com tags clicáveis
- */
-const OriginalTextDisplay: React.FC<{
-  id?: string;
-  text: string;
-  onTagClick: (tag: string) => void;
-}> = ({ id, text, onTagClick }) => {
-  if (!text) return null;
-
-  // Regex para capturar tags como {LINK:Page;Text}, {THING:Prefab}, {LIST_OF_RESOURCES}, etc.
-  // Suporta tags com ou sem dois pontos.
-  const underscoredWords = "(\\{(?:[A-Z_]+)(?::[^}]*)?\\})";
-  const htmlTags = "(<(?:size|color)=(?::\\d+|\\w+)%?>|</(?:size|color)>)";
-  const finalRegex = new RegExp(`${underscoredWords}|${htmlTags}`, "g");
-  const parts = text.split(finalRegex).filter(Boolean);
-  let shortcutIndex = 0;
-
+/** Auxiliar grid component */
+const TitledGridItem: React.FC<{ children: React.ReactNode; title: string, size: GridSize }> = ({ children, title, size }) => {
   return (
-    <Typography
-      variant="body2"
-      whiteSpace="pre-wrap"
-    >
-      {parts.map((part, i) => {
-        if (
-          (part.startsWith("{") && part.endsWith("}")) ||
-          (part.startsWith("<") && part.endsWith(">"))
-        ) {
-          const shortcut = shortcuts[shortcutIndex++];
-          return (
-            <Badge
-              key={`${i}-${shortcut}`}
-              anchorOrigin={{ horizontal: "left", vertical: "top" }}
-              badgeContent={shortcut}
-              color="info"
-              sx={{ ml: 1 }}
-            >
-              <Box
-                id={`${id}-tag-${shortcut}`}
-                component="span"
-                onClick={() => onTagClick(part)}
-                sx={{
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                  borderRadius: 1,
-                  color: "primary.main",
-                  cursor: "pointer",
-                  display: "inline-block",
-                  fontWeight: "bold",
-                  marginInline: 0.2,
-                  paddingInline: 0.5,
-                  textDecoration: "underline",
-                  verticalAlign: "middle",
-                  "&:hover": {
-                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.2),
-                    color: "primary.dark",
-                  },
-                }}
-              >
-                {part}
-              </Box>
-            </Badge>
-          );
-        }
-
-        return <span key={i}>{part}</span>;
-      })}
-    </Typography>
+    <Grid paddingInline={1} size={size}>
+      <Typography
+        color="text.secondary"
+        fontSize="0.65rem"
+        fontWeight="bold"
+        textTransform="uppercase"
+        variant="caption"
+      >
+        {title}
+      </Typography>
+      {children}
+    </Grid>
   );
 };
 
-const TranslationItemInner: React.FC<IProps> = ({
+const TranslationEntry: React.FC<IProps> = ({
   entry,
   index,
   onChange,
   onAccept,
 }) => {
-  const { t } = useI18nContext();
   const theme = useTheme();
-  const { showAccepted, metadata } = useTranslationContext();
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Use recordKey if available, otherwise fallback to parsing key or full key
-  const displayKey = entry.recordKey ?? entry.key;
-  const subkeyLabel = entry.subkey ?? null;
-
-  // local buffer for smooth typing
+  const { t } = useI18nContext();
+  const { showAccepted, metadata, compiledRegex } = useTranslationContext();
   const [translation, setTranslation] = useState(entry.translation ?? "");
   const [isTranslating, setIsTranslating] = useState(false);
+  const matches = useRegexHighlight(entry.original, compiledRegex);
 
-  // Update local state if prop changes (e.g. from JSON import)
-  useEffect(() => {
-    setTranslation(entry.translation ?? "");
-  }, [entry.translation]);
-
-  // decide if should be multiline (descriptions / text or long original)
+  const displayKey = entry.recordKey ?? entry.key;
+  const subkeyLabel = entry.subkey ?? null;
   const shouldMultiline =
     (entry.subkey && ["Description", "Text"].includes(entry.subkey)) ||
     (entry.original?.length ?? 0) > 60;
 
-  const commitChange = useCallback(() => {
-    // only call onChange when value actually differs from entry.translation
+  const handleCommitChange = useCallback(() => {
     if ((entry.translation ?? "") !== translation) {
       onChange(entry.id, translation);
     }
   }, [entry.id, entry.translation, translation, onChange]);
 
   const handleAccept = useCallback(() => {
-    commitChange();
+    handleCommitChange();
     onAccept(entry.id);
-  }, [commitChange, onAccept, entry.id]);
+  }, [handleCommitChange, onAccept, entry.id]);
 
-  const handleTranslate = useCallback(async () => {
+  const handleAutoTranslate = useCallback(async () => {
     if (!entry.original || isTranslating) return;
-
     setIsTranslating(true);
     try {
       const targetLang = mapLanguageToCode(metadata?.Language, metadata?.Code);
       const translated = await translateText(entry.original, targetLang);
       setTranslation(translated);
-      // Focar o campo após traduzir para que o usuário possa revisar
-      // Usamos um delay curtíssimo para garantir que o estado do TextField (disabled) já atualizou
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
-          // Opcional: seleciona o texto para facilitar edição rápida
           inputRef.current.select();
         }
       }, 10);
@@ -159,7 +88,6 @@ const TranslationItemInner: React.FC<IProps> = ({
   }, [entry.original, isTranslating, metadata?.Language, metadata?.Code]);
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
-    // Tab outside last bracket to continue typing
     if (e.key === "Tab") {
       const input = inputRef.current;
       if (input) {
@@ -174,20 +102,17 @@ const TranslationItemInner: React.FC<IProps> = ({
         }
       }
     }
-
     if (e.altKey && (e.key === "t" || e.key === "T")) {
       e.preventDefault();
-      handleTranslate();
+      handleAutoTranslate();
       return;
     }
-
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
         case "Enter":
         case "m":
           e.preventDefault();
           handleAccept();
-
           setTimeout(() => {
             // Se as aceitas estão sendo escondidas, o "próximo" item agora ocupa 
             // a posição do item atual (mesmo index). Caso contrário, pula pro próximo (+1).
@@ -208,9 +133,7 @@ const TranslationItemInner: React.FC<IProps> = ({
             const end = input.selectionEnd ?? translation.length;
             const newText =
               translation.substring(0, start - 1) + translation.substring(end);
-
             setTranslation(newText);
-
             // Re-focar e posicionar cursor ou seleção após a tag inserida
             setTimeout(() => {
               input.focus();
@@ -219,7 +142,6 @@ const TranslationItemInner: React.FC<IProps> = ({
           }
           break;
         }
-
         // Navigate to previous/next translation item
         case "j":
         case "k": {
@@ -235,7 +157,6 @@ const TranslationItemInner: React.FC<IProps> = ({
           }, 50);
           break;
         }
-
         // Tag completions:
         case "y":
         case "u":
@@ -270,6 +191,7 @@ const TranslationItemInner: React.FC<IProps> = ({
     }
   };
 
+  /** Copies original over to translation */
   const handleCopyOriginal = useCallback(() => {
     setTranslation(entry.original ?? "");
   }, [entry.original]);
@@ -282,15 +204,11 @@ const TranslationItemInner: React.FC<IProps> = ({
         const end = input.selectionEnd ?? translation.length;
         const newText =
           translation.substring(0, start) + tag + translation.substring(end);
-
         setTranslation(newText);
-
         // Re-focar e posicionar cursor ou seleção após a tag inserida
         setTimeout(() => {
           input.focus();
-
           // Verifica se a tag tem a parte traduzível (após o ponto e vírgula)
-          // Ex: {LINK:ConstructionPage;Construction}
           const semiIndex = tag.indexOf(";");
           if (semiIndex !== -1) {
             // Selecionar o texto entre o ';' e o '}'
@@ -310,19 +228,9 @@ const TranslationItemInner: React.FC<IProps> = ({
     [translation],
   );
 
-  // background by status using theme
-  const backgroundColor =
-    entry.status === "edited"
-      ? alpha(
-        theme.palette.warning.main,
-        theme.palette.mode === "dark" ? 0.16 : 0.12,
-      )
-      : entry.status === "saved"
-        ? alpha(
-          theme.palette.success.main,
-          theme.palette.mode === "dark" ? 0.16 : 0.12,
-        )
-        : "transparent";
+  useEffect(() => {
+    setTranslation(entry.translation ?? "");
+  }, [entry.translation]);
 
   return (
     <Grid
@@ -331,21 +239,22 @@ const TranslationItemInner: React.FC<IProps> = ({
       onKeyDown={handleKeyDown}
       padding={1}
       sx={{
-        backgroundColor,
+        backgroundColor: entry.status === "edited"
+          ? alpha(
+            theme.palette.warning.main,
+            theme.palette.mode === "dark" ? 0.16 : 0.12
+          )
+          : entry.status === "saved"
+            ? alpha(
+              theme.palette.success.main,
+              theme.palette.mode === "dark" ? 0.16 : 0.12
+            )
+            : "transparent",
         transition: "background-color 0.2s ease",
       }}
     >
       {/* Coluna 1: Key & Subkey */}
-      <Grid paddingInline={1} size={2}>
-        <Typography
-          color="text.secondary"
-          fontSize="0.65rem"
-          fontWeight="bold"
-          textTransform="uppercase"
-          variant="caption"
-        >
-          {t('translationItem.key')}
-        </Typography>
+      <TitledGridItem title={t('translationItem.key')} size={2}>
         <Grid container justifyContent="space-between">
           <Typography
             fontWeight="bold"
@@ -372,37 +281,20 @@ const TranslationItemInner: React.FC<IProps> = ({
             </Typography>
           )}
         </Grid>
-      </Grid>
+      </TitledGridItem>
 
       {/* Coluna 2: Original Text */}
-      <Grid paddingInline={1} size="grow">
-        <Typography
-          color="text.secondary"
-          fontSize="0.65rem"
-          fontWeight="bold"
-          textTransform="uppercase"
-          variant="caption"
-        >
-          {t('translationItem.original')}
-        </Typography>
-        <OriginalTextDisplay
+      <TitledGridItem title={t('translationItem.original')} size='grow'>
+        <OriginalText
           id={index !== undefined ? `original-text-${index}` : undefined}
           text={entry.original ?? ""}
+          matches={matches || []}
           onTagClick={handleTagClick}
         />
-      </Grid>
+      </TitledGridItem>
 
       {/* Coluna 3: Translation Input */}
-      <Grid container paddingInline={1} size="grow">
-        <Typography
-          color="text.secondary"
-          fontSize="0.65rem"
-          fontWeight="bold"
-          textTransform="uppercase"
-          variant="caption"
-        >
-          {t('translationItem.translation')}
-        </Typography>
+      <TitledGridItem title={t('translationItem.translation')} size='grow'>
         <TextField
           id={index !== undefined ? `translation-input-${index}` : undefined}
           inputRef={inputRef}
@@ -413,79 +305,40 @@ const TranslationItemInner: React.FC<IProps> = ({
           placeholder="..."
           value={translation}
           onChange={(e) => setTranslation(e.target.value)}
-          onBlur={commitChange}
+          onBlur={handleCommitChange}
           size="small"
           variant="outlined"
-          disabled={isTranslating} // Disable when translating
+          disabled={isTranslating}
           sx={{
             "& .MuiOutlinedInput-root": {
-              backgroundColor: (theme) =>
+              backgroundColor:
                 theme.palette.mode === "dark"
                   ? alpha(theme.palette.background.paper, 0.5)
                   : "white",
             },
           }}
-          InputProps={{
-            endAdornment: isTranslating && (
-              <CircularProgress size={20} color="inherit" />
-            ),
+          slotProps={{
+            input: {
+              endAdornment: isTranslating && (
+                <CircularProgress size={20} color="inherit" />
+              ),
+            }
           }}
         />
-      </Grid>
+      </TitledGridItem>
 
       {/* Coluna 4: Actions */}
-      <Grid paddingInline={1} size={1.5}>
-        <Typography
-          color="text.secondary"
-          fontSize="0.65rem"
-          fontWeight="bold"
-          textTransform="uppercase"
-          variant="caption"
-        >
-          {t('translationItem.actions')}
-        </Typography>
-        <Grid container gap={1} justifyContent="center" flexWrap="nowrap">
-          <Tooltip title={t('translationItem.tooltipTranslate')}>
-            <Button
-              size="small"
-              onClick={handleTranslate}
-              disabled={isTranslating}
-              aria-label="traduzir"
-              sx={{ minWidth: 32, height: 32, p: 0 }}
-            >
-              {isTranslating ? (
-                <CircularProgress size={16} />
-              ) : (
-                <AutoFixHighIcon fontSize="small" />
-              )}
-            </Button>
-          </Tooltip>
-          <Tooltip title={t('translationItem.tooltipCopy')}>
-            <Button
-              size="small"
-              onClick={handleCopyOriginal}
-              aria-label="copiar original"
-              sx={{ minWidth: 32, height: 32, p: 0 }}
-            >
-              <ContentCopyIcon fontSize="small" />
-            </Button>
-          </Tooltip>
-          <Tooltip title={t('translationItem.tooltipAccept')}>
-            <Button
-              size="small"
-              variant="contained"
-              onClick={handleAccept}
-              color={entry.status === "saved" ? "success" : "primary"}
-              sx={{ minWidth: 32, height: 32, p: 0 }}
-            >
-              <CheckIcon fontSize="small" />
-            </Button>
-          </Tooltip>
-        </Grid>
-      </Grid>
+      <TitledGridItem title={t('translationItem.actions')} size={1.5}>
+        <ActionButtons
+          entry={entry}
+          handleAccept={handleAccept}
+          handleCopyOriginal={handleCopyOriginal}
+          handleAutoTranslate={handleAutoTranslate}
+          isTranslating={isTranslating}
+        />
+      </TitledGridItem>
     </Grid>
   );
 };
 
-const TranslationItem = React.memo(TranslationItemInner);
-export default TranslationItem;
+export default React.memo(TranslationEntry);
