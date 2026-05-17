@@ -21,6 +21,7 @@ import { useI18nContext } from "../context/useI18nContext";
 import { useTranslationContext } from "../context/useTranslationContext";
 
 const ProjectToolbar: React.FC = () => {
+  const theme = useTheme();
   const {
     entries,
     xmlDoc,
@@ -44,12 +45,9 @@ const ProjectToolbar: React.FC = () => {
   } = useTranslationContext();
   const { openDialog } = useDialogContext();
   const { t } = useI18nContext();
-
-  const theme = useTheme();
-
-  const searchTimeoutId = useRef<number | undefined>(undefined);
   const [localSearchText, setLocalSearchText] = React.useState(searchTerm || "");
   const [loadingSearch, setLoadingSearch] = React.useState(false);
+  const searchTimeoutId = useRef<number | undefined>(undefined);
 
   React.useEffect(() => {
     clearTimeout(searchTimeoutId.current);
@@ -72,7 +70,6 @@ const ProjectToolbar: React.FC = () => {
     <Grid
       container
       flexDirection="column"
-      rowGap={2}
       width="100%"
     >
       {/* Actions Toolbar */}
@@ -121,7 +118,6 @@ const ProjectToolbar: React.FC = () => {
         <Grid
           container
           flexDirection={{ xs: "column", lg: "row" }}
-          gap={{ xs: 2, lg: 0 }}
           flexWrap="nowrap"
           alignItems="center"
           paddingInline={2}
@@ -160,51 +156,53 @@ const ProjectToolbar: React.FC = () => {
               variant="outlined"
             />
 
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showAccepted}
-                  onChange={(e) => setShowAccepted(e.target.checked)}
-                  size="small"
-                />
-              }
-              label={
-                <Typography variant="body2" sx={{ userSelect: 'none' }}>
-                  {t('toolbar.showAccepted')}
-                </Typography>
-              }
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={showEmpty}
-                  onChange={(e) => setShowEmpty(e.target.checked)}
-                  size="small"
-                />
-              }
-              label={
-                <Typography variant="body2" sx={{ userSelect: 'none' }}>
-                  {t('toolbar.showEmpty')}
-                </Typography>
-              }
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={useRegex}
-                  onChange={(e) => setUseRegex(e.target.checked)}
-                  size="small"
-                />
-              }
-              label={
-                <Tooltip title={t('toolbar.regexTooltip')}>
-                  <Typography variant="body2" sx={{ userSelect: 'none', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Code fontSize="small" />
-                    {t('toolbar.regexLabel')}
+            <Grid size={6}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={showAccepted}
+                    onChange={(e) => setShowAccepted(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label={
+                  <Typography variant="body2" sx={{ userSelect: 'none' }}>
+                    {t('toolbar.showAccepted')}
                   </Typography>
-                </Tooltip>
-              }
-            />
+                }
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={showEmpty}
+                    onChange={(e) => setShowEmpty(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label={
+                  <Typography variant="body2" sx={{ userSelect: 'none' }}>
+                    {t('toolbar.showEmpty')}
+                  </Typography>
+                }
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={useRegex}
+                    onChange={(e) => setUseRegex(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label={
+                  <Tooltip title={t('toolbar.regexTooltip')}>
+                    <Typography variant="body2" sx={{ userSelect: 'none', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Code fontSize="small" />
+                      {t('toolbar.regexLabel')}
+                    </Typography>
+                  </Tooltip>
+                }
+              />
+            </Grid>
           </Grid>
           <Grid container flexDirection="column" size={{ xs: 12, lg: "grow" }} paddingInline={2}>
             <Grid container flexDirection="row" justifyContent="space-between">

@@ -54,18 +54,18 @@ export default function App() {
 
   return (
     <Container maxWidth="xl">
+      {/* Global Dialogs */}
+      <DialogGoToPage />
+      <DialogConfig />
+      <DialogAlert />
+      <DialogConfirm />
+
       <Grid
         container
         flexDirection="column"
         flexWrap="nowrap"
         sx={{ height: "100vh", overflow: "hidden" }}
       >
-        {/* Global Dialogs */}
-        <DialogGoToPage />
-        <DialogConfig />
-        <DialogAlert />
-        <DialogConfirm />
-
         {/* Header & Toolbar Section */}
         <Grid
           container
