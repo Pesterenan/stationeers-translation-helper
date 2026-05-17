@@ -1,18 +1,19 @@
-export type RegexMatch = { start: number; end: number; matchText: string };
+import type { TRegexMatch } from "../types";
+
 const MAX_HIGHLIGHT_LENGTH = 1000;
+const MAX_MATCHES_COUNT = 25; // Limit matches to prevent freezing
 
 /** Hook that finds all regex matches within a text and returns their coordinates (ranges). */
 export function useRegexHighlight(
   text: string | null | undefined,
   regex: RegExp | null
-): RegexMatch[] {
+): TRegexMatch[] {
   if (!text || !regex || text.length > MAX_HIGHLIGHT_LENGTH) {
     return [];
   }
 
-  const matches: RegexMatch[] = [];
+  const matches: TRegexMatch[] = [];
   let matchCount = 0;
-  const MAX_MATCHES_COUNT = 25; // Limit matches to prevent freezing
 
   try {
     // Use matchAll for reliable iteration over all global regex matches

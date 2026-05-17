@@ -75,16 +75,7 @@ export interface IXmlRecordThing extends IXmlRecord {
 export interface IXmlStationpediaPage extends IXmlRecordBase {
   Title?: string;
   Text?: string;
-  DisplayFilter?: string; // Geralmente não traduzível, mas parte da estrutura
+  DisplayFilter?: string;
 }
 
-// Listas de RegExp para categorização automática na UI (Filtros)
-export const DEFAULT_CATEGORY_RULES: Record<string, RegExp[]> = {
-  tooltips: [/^ScreenSpaceToolTip/, /^StatusIcon/],
-  tips: [/^GameTip/],
-  help: [/^Help_/, /^Stationpedia/],
-  reagents: [/^Reagent_/],
-  things: [/^Thing_/, /^Appliance/, /^Item/, /^Structure/], // Exemplo baseado em prefixos comuns
-  ui: [/^UI_|^Ui_/, /^Window_/, /^Inventory/],
-  other: [/.*/],
-};
+export type TRegexMatch = { start: number; end: number; matchText: string };
