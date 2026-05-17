@@ -1,3 +1,4 @@
+import React, { useMemo } from 'react';
 import { Typography, alpha, Badge, Box } from "@mui/material";
 import { TAG_EXTRACTION_REGEX, TAG_SHORTCUTS } from "../../constants";
 import type { TRegexMatch } from "../../types";
@@ -40,51 +41,64 @@ const MatchedTextSegment: React.FC<{ match: TRegexMatch }> = ({ match: { start, 
 const OriginalText: React.FC<IOriginalTextProps> = ({ id, text, matches, onTagClick }) => {
   if (!text) return null;
 
-  const parts = text.split(TAG_EXTRACTION_REGEX).filter(Boolean);
+  const segments = useMemo(() => {
+    // Logic for generating highlighted segments based on regex matches
+    let lastIndex = 0;
+    const segmentParts: React.ReactNode[] = [];
 
-  let lastIndex = 0;
-  const segments: React.ReactNode[] = [];
+    for (const match of matches) {
+      // 1. Add plain text before the current match, if any
+      if (match.start > lastIndex && match.start <= text.length) {
+        const preText = text.substring(lastIndex, match.start);
+        segmentParts.push(<NormalTextSegment key={`pre-${match.start}`} position='pre' start={match.start} end={match.start + preText.length} text={preText} />);
+      }
 
-  for (const match of matches) {
-    // 1. Adiciona o texto em plain antes do match, se houver
-    if (match.start >= lastIndex && match.start <= text.length) {
-      const preText = text.substring(lastIndex, Math.min(match.start, text.length));
-      segments.push(<NormalTextSegment position='pre' start={match.start} end={Math.max(match.start, text.length)} text={preText} />);
+      // 2. Add the highlighted segment (the match)
+      segmentParts.push(<MatchedTextSegment key={`match-${match.start}-${match.end}`} match={match} />);
+
+      lastIndex = Math.max(lastIndex, match.end);
     }
 
-    // 2. Adiciona o segmento destacado (o match)
-    segments.push(<MatchedTextSegment match={match} />
-    );
+    // 3. Add any remaining plain text after the last match
+    if (lastIndex < text.length) {
+      const postText = text.substring(lastIndex);
+      segmentParts.push(<NormalTextSegment key={`post-${lastIndex}`} position='post' start={lastIndex} end={text.length} text={postText} />);
+    }
 
-    lastIndex = Math.max(lastIndex, match.end);
-  }
+    return segmentParts;
+  }, [text, matches]);
 
-  // 3. Adiciona qualquer texto plain restante após o último match
-  if (lastIndex < text.length) {
-    const postText = text.substring(lastIndex);
-    segments.push(<NormalTextSegment position='post' start={lastIndex} end={text.length} text={postText} />);
-  }
+  // Logic for rendering non-highlighted tags (if no complex highlights are present)
+  const plainParts = useMemo(() => {
+    return text.split(TAG_EXTRACTION_REGEX).filter(Boolean);
+  }, [text]);
 
-  // Renderiza o conteúdo destacado (ranges) OU as tags se não houver ranges de destaque complexos.
+  // Determine if we should render the highlight segments or fallback to basic tag rendering
   if (matches && matches.length > 0) {
-    return (<Typography
-      variant="body2"
-      whiteSpace="pre-wrap"
-    >
-      {segments}
-    </Typography>);
-  } else if (!text) {
-    return null;
-  } else {
-    // Se não há ranges, apenas renderiza o texto original com as tags separadas por split()
     return (
       <Typography
         variant="body2"
         whiteSpace="pre-wrap"
       >
-        {parts.map((part, i) => {
-          if ((part.startsWith("{") && part.endsWith("}")) || (part.startsWith("<") && part.endsWith(">"))) {
-            const shortcut = TAG_SHORTCUTS[i % TAG_SHORTCUTS.length]; // Usa módulo para evitar overflow do array de shortcuts
+        {segments}
+      </Typography>
+    );
+  } else if (!text) {
+    return null;
+  } else {
+    // Fallback: Render text using simple tag detection (no regex highlighting/ranges)
+    return (
+      <Typography
+        variant="body2"
+        whiteSpace="pre-wrap"
+      >
+        {plainParts.map((part, i) => {
+          const isTag = (part.startsWith("{") && part.endsWith("}")) || (part.startsWith("<") && part.endsWith(">"));
+
+          if (isTag) {
+            // Use module for shortcut index to prevent array overflow if tags repeat many times
+            const shortcutIndex = i % TAG_SHORTCUTS.length; 
+            const shortcut = TAG_SHORTCUTS[shortcutIndex]; 
             return (
               <Badge
                 key={`${i}-${shortcut}`}
@@ -122,7 +136,7 @@ const OriginalText: React.FC<IOriginalTextProps> = ({ id, text, matches, onTagCl
           return <span key={i}>{part}</span>;
         })}
       </Typography>
-    )
+    );
   }
 };
 
