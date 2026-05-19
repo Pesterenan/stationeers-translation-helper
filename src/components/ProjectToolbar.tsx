@@ -3,11 +3,15 @@ import {
   Button,
   Checkbox,
   CircularProgress,
+  FormControl,
   FormControlLabel,
   Grid,
   InputAdornment,
+  InputLabel,
   LinearProgress,
+  MenuItem,
   Paper,
+  Select,
   TextField,
   Tooltip,
   Typography,
@@ -38,9 +42,11 @@ const ProjectToolbar: React.FC = () => {
     exportProgressJson,
     loadProgressJson,
     setSearchTerm,
+    setSearchScope,
     setShowAccepted,
     setShowEmpty,
     setUseRegex,
+    searchScope,
     loadXml,
   } = useTranslationContext();
   const { openDialog } = useDialogContext();
@@ -155,6 +161,27 @@ const ProjectToolbar: React.FC = () => {
               value={localSearchText}
               variant="outlined"
             />
+
+            <FormControl
+              sx={{ m: 1, minWidth: 120, borderRadius: "100px" }}
+              size="small"
+            >
+              <InputLabel id="search-scope-label">
+                {t('toolbar.searchScope')}
+              </InputLabel>
+              <Select
+                labelId="search-scope-label"
+                id="search-scope-select"
+                value={searchScope}
+                label={t('toolbar.searchScope')}
+                onChange={(event) => setSearchScope(event.target.value as 'original' | 'translated' | 'both')}
+                sx={{ borderRadius: "100px" }}
+              >
+                <MenuItem value="both">{t('toolbar.searchScopeBoth')}</MenuItem>
+                <MenuItem value="original">{t('toolbar.searchScopeOriginal')}</MenuItem>
+                <MenuItem value="translated">{t('toolbar.searchScopeTranslated')}</MenuItem>
+              </Select>
+            </FormControl>
 
             <Grid size={6}>
               <FormControlLabel

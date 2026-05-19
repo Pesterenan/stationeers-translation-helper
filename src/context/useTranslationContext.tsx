@@ -9,6 +9,7 @@ export interface ITranslationContextType {
   metadata: IMetadata | undefined;
   page: number;
   searchTerm: string;
+  searchScope: 'original' | 'translated' | 'both';
   showAccepted: boolean;
   showEmpty: boolean;
   useRegex: boolean;
@@ -26,6 +27,7 @@ export interface ITranslationContextType {
   setMetadata: (meta: IMetadata) => void;
   setPage: (p: number) => void;
   setSearchTerm: (term: string) => void;
+  setSearchScope: (scope: 'original' | 'translated' | 'both') => void;
   setShowAccepted: (val: boolean) => void;
   setShowEmpty: (val: boolean) => void;
   setRegexError: (err: string | null) => void;

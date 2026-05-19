@@ -44,6 +44,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const [showEmpty, setShowEmpty] = useState<boolean>(false);
   const [useRegex, setUseRegex] = useState<boolean>(false);
   const [regexError, setRegexError] = useState<string | null>(null);
+  const [searchScope, setSearchScope] = useState<'original' | 'translated' | 'both'>('both');
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
 
   // Validate RegEx and expose compiled regex for highlighting
@@ -111,15 +112,26 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         // Then, check search if active
         if (isSearchActive) {
           let matched = false;
-          if (useRegex && compiledRegex) {
-            matched = compiledRegex.test(entry.key)
-              || compiledRegex.test(entry.original)
-              || (entry.savedTranslation != null && compiledRegex.test(entry.savedTranslation));
-          } else {
-            const lowerTerm = searchTerm.toLowerCase();
-            matched = entry.key.toLowerCase().includes(lowerTerm)
-              || entry.original.toLowerCase().includes(lowerTerm)
-              || (entry.savedTranslation?.toLowerCase().includes(lowerTerm) ?? false);
+          const lowerTerm = searchTerm.toLowerCase(); // Definir uma vez para eficiência
+
+          const checkMatch = (text: string | undefined) => {
+            if (!text) return false;
+            return useRegex && compiledRegex
+              ? compiledRegex.test(text)
+              : text.toLowerCase().includes(lowerTerm);
+          };
+
+          switch (searchScope) {
+            case 'original':
+              matched = checkMatch(entry.key) || checkMatch(entry.original);
+              break;
+            case 'translated':
+              matched = checkMatch(entry.translation) || checkMatch(entry.savedTranslation);
+              break;
+            case 'both':
+            default:
+              matched = checkMatch(entry.key) || checkMatch(entry.original) || checkMatch(entry.translation) || checkMatch(entry.savedTranslation);
+              break;
           }
           return matched;
         }
@@ -133,7 +145,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     });
 
     return result;
-  }, [searchTerm, groupedEntries, showAccepted, showEmpty, useRegex, compiledRegex]);
+  }, [searchTerm, groupedEntries, showAccepted, showEmpty, useRegex, compiledRegex, searchScope]);
 
   // Sync validated regex error to state
   useEffect(() => {
@@ -551,10 +563,12 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       resetProject,
       savedCount,
       searchTerm,
+      searchScope,
       sections,
       setMetadata,
       setPage,
       setRegexError,
+      setSearchScope,
       setSearchTerm,
       setShowAccepted,
       setShowEmpty,
@@ -590,6 +604,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       resetProject,
       savedCount,
       searchTerm,
+      searchScope,
       sections,
       showAccepted,
       showEmpty,
