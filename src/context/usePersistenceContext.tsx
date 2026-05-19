@@ -1,16 +1,15 @@
 
 import { createContext, useContext } from "react";
 import type { IMetadata } from "../types";
-
-export type LocalStorageKey = 'sth_ui_lang' | 'sth_config';
+import type { StorageKey } from "../constants";
 
 interface IPersistenceContext {
   saveFileConfig: (metadata: IMetadata | null) => void;
   loadFileConfig: () => IMetadata | null;
   saveDraft: (key: string, data: any) => void;
   loadDraft: (key: string) => any | null;
-  saveUiConfig: (key: LocalStorageKey, value: string) => void;
-  loadUiConfig: (key: LocalStorageKey) => string | null;
+  saveUiConfig: (key: StorageKey, value: string) => void;
+  loadUiConfig: (key: StorageKey) => string | null;
 }
 
 export const PersistenceContext = createContext<IPersistenceContext | undefined>(undefined);

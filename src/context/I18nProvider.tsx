@@ -2,6 +2,7 @@ import { useState, useCallback, type ReactNode } from "react";
 import { locales } from "../locales";
 import type { TLocaleKey, TTranslationKeys } from "../locales";
 import { I18nContext } from "./useI18nContext";
+import { usePersistenceContext } from "./usePersistenceContext";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getNestedValue = (obj: any, path: string) => {
@@ -11,10 +12,11 @@ const getNestedValue = (obj: any, path: string) => {
 };
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const detectLanguage = (): TLocaleKey => {
-    const saved = localStorage.getItem("sth_ui_lang") as TLocaleKey | null;
-    if (saved && locales[saved]) return saved;
+  const { loadUiConfig, saveUiConfig } = usePersistenceContext();
 
+  const detectLanguage = (): TLocaleKey => {
+    const saved = loadUiConfig('UI_LANG') as TLocaleKey | null;
+    if (saved && locales[saved]) return saved;
     const sysLang = (navigator.language || 'en').split("-")[0] as TLocaleKey;
     return locales[sysLang] ? sysLang : "en";
   };
@@ -39,12 +41,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     return value as string;
   }, [locale]);
 
-  const changeLanguage = useCallback((lang: TLocaleKey) => {
+  const changeLanguage = (lang: TLocaleKey) => {
     if (locales[lang]) {
       setLocale(lang);
-      localStorage.setItem("sth_ui_lang", lang);
+      saveUiConfig("UI_LANG", lang);
     }
-  }, []);
+  };
 
   return (
     <I18nContext.Provider value={{ locale, t, changeLanguage }}>

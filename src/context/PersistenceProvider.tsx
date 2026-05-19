@@ -1,59 +1,24 @@
-import { useState, useCallback, type ReactNode } from "react";
-import { type LocalStorageKey, PersistenceContext } from "./usePersistenceContext";
+import { type ReactNode } from "react";
+import { PersistenceContext } from "./usePersistenceContext";
 import type { IMetadata } from "../types";
+import { STORAGE_KEYS, type StorageKey } from "../constants";
+import { setItemJSON, getItemJSON, setItemString, getItemString } from "../lib/persistenceHelpers";
 
 export function PersistenceProvider({ children }: { children: ReactNode }) {
-  const saveFileConfig = (metadata: IMetadata | null) => {
-    if (metadata) {
-      localStorage.setItem("sth_config", JSON.stringify(metadata));
-    } else {
-      localStorage.removeItem("sth_config");
-    }
-  };
-  const loadFileConfig = (): IMetadata | null => {
-    const savedConfig = localStorage.getItem('sth_config');
-    if (savedConfig) {
-      try {
-        return JSON.parse(savedConfig);
-      } catch (error) {
-        console.error("Couldn't parse the saved file config.", error);
-        return null;
-      }
-    }
-    return null;
-  };
+  const loadFileConfig = (): IMetadata | null => getItemJSON<IMetadata>(STORAGE_KEYS.CONFIG);
+  const saveFileConfig = (metadata: IMetadata | null) => setItemJSON(STORAGE_KEYS.CONFIG, metadata);
 
-  const saveDraft = (key: string, data: any) => {
-    if (data) {
-      try {
-        localStorage.setItem(key, JSON.stringify(data));
-      } catch (error) {
-        console.error("Couldn't save the current draft.", error);
-      }
-    }
-  };
+  const loadDraft = (key: string): any | null => getItemJSON(key);
+  const saveDraft = (key: string, data: any) => setItemJSON(key, data);
 
-  const loadDraft = (key: string): any | null => {
-    const savedDraft = localStorage.getItem(key);
-    if (savedDraft) {
-      try {
-        return JSON.parse(savedDraft);
-      } catch (error) {
-        console.error("Couldn't parse the saved draft.", error);
-        return null;
-      }
-    }
-    return null;
-  };
-
-  const saveUiConfig = (key: LocalStorageKey, value: string) => {
-    if (!key) return;
-    localStorage.setItem(key, value);
-  };
-
-  const loadUiConfig = (key: LocalStorageKey) => {
+  const loadUiConfig = (key: StorageKey) => {
     if (!key) return null;
-    return localStorage.getItem(key);
+    return getItemString(STORAGE_KEYS[key]);
+  };
+
+  const saveUiConfig = (key: StorageKey, value: string) => {
+    if (!key) return;
+    setItemString(STORAGE_KEYS[key], value);
   };
 
   return (

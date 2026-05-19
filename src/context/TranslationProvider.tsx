@@ -1,9 +1,9 @@
 import React, {
   useState,
-  useCallback,
   useMemo,
   useEffect,
   type ReactNode,
+  useCallback,
 } from "react";
 import { type IEntry, type IMetadata } from "../types";
 import {
@@ -19,23 +19,17 @@ import {
 import { TranslationContext } from "./useTranslationContext";
 import { useI18nContext } from "./useI18nContext";
 import { useDialogContext } from "./useDialogContext";
+import { usePersistenceContext } from "./usePersistenceContext";
+import { generateDraftKey } from "../lib/persistenceHelpers";
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const { t } = useI18nContext();
+  const { loadFileConfig, saveFileConfig, loadDraft, saveDraft } = usePersistenceContext();
   const { showAlert, showConfirm } = useDialogContext();
+
+  const [metadata, setMetadata] = useState<IMetadata | null>(() => loadFileConfig());
   const [entries, setEntries] = useState<IEntry[]>([]);
   const [xmlDoc, setXmlDoc] = useState<XMLDocument | null>(null);
-  const [metadata, setMetadata] = useState<IMetadata | undefined>(() => {
-    const saved = localStorage.getItem("sth_config");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return undefined;
-      }
-    }
-    return undefined;
-  });
   const [originalFileName, setOriginalFileName] = useState<string>("");
   const [sourceVersion, setSourceVersion] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,29 +54,6 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       return { compiledRegex: null, regexError: message };
     }
   }, [searchTerm, useRegex]);
-
-  // Helper to get storage key
-  const getStorageKey = useCallback((lang?: string, code?: string, fileName?: string) => {
-    const l = lang?.toLowerCase().replace(/\s+/g, "-").trim() || "unknown";
-    const c = code?.toLowerCase().replace(/\s+/g, "-").trim() || "";
-    const suffix = c ? `${l}_${c}` : l;
-
-    if (fileName) {
-      const fn = fileName.toLowerCase().replace(/\s+/g, "-").replace(/\.xml$/, "").trim();
-      return `sth_draft_${fn}_${suffix}`;
-    }
-
-    return `sth_draft_${suffix}`;
-  }, []);
-
-  // Sync metadata to localStorage
-  useEffect(() => {
-    if (metadata) {
-      localStorage.setItem("sth_config", JSON.stringify(metadata));
-    } else {
-      localStorage.removeItem("sth_config");
-    }
-  }, [metadata]);
 
   // Group entries by section (Memoized: only re-runs when entries change)
   const groupedEntries = useMemo(() => {
@@ -215,13 +186,13 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         timestamp: new Date().toISOString(),
       };
 
-      const storageKey = getStorageKey(metadata.Language, metadata.Code, metadata.OriginalFileName);
-      localStorage.setItem(storageKey, JSON.stringify(draftData));
+      const storageKey = generateDraftKey(metadata.Language, metadata.Code, metadata.OriginalFileName);
+      saveDraft(storageKey, draftData);
       setLastAutoSave(new Date());
     }, 3000); // Save after 3s of inactivity
 
     return () => clearTimeout(timeoutId);
-  }, [entries, metadata, getStorageKey]);
+  }, [entries, metadata, generateDraftKey]);
 
   // Actions
   const loadXml = useCallback((text: string, fileName?: string, version?: string) => {
@@ -234,8 +205,6 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           metadata: xmlMeta,
         } = parseStationeersXml(text);
 
-        // Priority: 1. Current sth_config (manually set), 2. XML metadata
-        // If we have a Language in sth_config, we assume this is the target project.
         const finalMeta: IMetadata = {
           Language: metadata?.Language || xmlMeta.Language,
           Code: metadata?.Code || xmlMeta.Code,
@@ -247,32 +216,11 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         // Debug draft recovery
         console.log("Tentando recuperar rascunho para:", finalMeta.Language, finalMeta.Code, finalMeta.OriginalFileName);
 
-        // Check for existing draft in LocalStorage
-        // Try with fileName first, then fallback to old format
-        const storageKey = getStorageKey(finalMeta.Language || "", finalMeta.Code || "", finalMeta.OriginalFileName);
-        let savedDraft = localStorage.getItem(storageKey);
+        const storageKey = generateDraftKey(finalMeta.Language || "", finalMeta.Code || "", finalMeta.OriginalFileName);
+        const savedDraft = loadDraft(storageKey);
 
-        if (!savedDraft) {
-          // Fallback to old format (no fileName in key)
-          const fallbackKey = getStorageKey(finalMeta.Language || "", finalMeta.Code || "");
-          savedDraft = localStorage.getItem(fallbackKey);
-          if (savedDraft) {
-            console.log("Rascunho antigo encontrado, migrando para novo formato...");
-          }
-        }
-
-        let draftTranslations: Record<string, string | { translation: string, original: string }> = {};
-
-        if (savedDraft) {
-          try {
-            const parsed = JSON.parse(savedDraft);
-            // Only load if it's the same language/code (implicit by key, but good to be safe)
-            draftTranslations = parsed.translations || {};
-            console.log(t('messages.draftRecovered', { lang: finalMeta.Language || "" }));
-          } catch (e) {
-            console.error("Erro ao ler rascunho do LocalStorage", e);
-          }
-        }
+        const draftTranslations: Record<string, string | { translation: string, original: string }> = savedDraft.translations || {};
+        console.log(t('messages.draftRecovered', { lang: finalMeta.Language || "" }));
 
         const initialized: IEntry[] = parsedEntries.map((e) => {
           const combinedKey = `${e.section}|${e.key}`;
@@ -317,7 +265,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     }, 600); // 600ms para aguardar animação da UI
-  }, [getStorageKey, metadata, t, showAlert]);
+  }, [metadata, t, showAlert, loadDraft]);
 
 
   // Load mock data on development
@@ -534,13 +482,18 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     if (await showConfirm(t('app.title'), t('messages.confirmReset'))) {
       setEntries([]);
       setXmlDoc(null);
-      setMetadata(undefined);
+      setMetadata(null);
       setOriginalFileName("");
       setSourceVersion(null);
       setPage(1);
       setActiveSection("");
     }
   }, [t, showConfirm]);
+
+  // Sync metadata through PersistenceProvider
+  useEffect(() => {
+    saveFileConfig(metadata);
+  }, [metadata, saveFileConfig]);
 
   const value = useMemo(
     () => ({

@@ -6,7 +6,7 @@ export interface ITranslationContextType {
   categories: Record<string, IEntry[]>;
   entries: IEntry[];
   isLoading: boolean;
-  metadata: IMetadata | undefined;
+  metadata: IMetadata | null;
   page: number;
   searchTerm: string;
   searchScope: 'original' | 'translated' | 'both';
@@ -24,7 +24,7 @@ export interface ITranslationContextType {
   savedCount: number;
   total: number;
   totalPages: number;
-  setMetadata: (meta: IMetadata) => void;
+  setMetadata: (metadata: IMetadata) => void;
   setPage: (p: number) => void;
   setSearchTerm: (term: string) => void;
   setSearchScope: (scope: 'original' | 'translated' | 'both') => void;

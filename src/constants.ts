@@ -1,3 +1,12 @@
+/** Storage Keys Mapping */
+export const STORAGE_KEYS = {
+  CONFIG: 'sth_config',
+  DRAFT_PREFIX: 'sth_draft',
+  UI_LANG: 'sth_ui_lang',
+} as const;
+
+export type StorageKey = keyof typeof STORAGE_KEYS;
+
 // Listas de RegExp para categorização automática na UI (Filtros)
 export const DEFAULT_CATEGORY_RULES: Record<string, RegExp[]> = {
   tooltips: [/^ScreenSpaceToolTip/, /^StatusIcon/],
