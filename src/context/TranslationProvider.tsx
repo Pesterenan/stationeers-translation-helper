@@ -16,6 +16,7 @@ import {
   updateTranslation as updateTranslationHelper,
   acceptTranslation,
 } from "../lib/entryHelpers";
+import { resolveFinalMetadata, initializeEntriesWithDraft } from "../lib/projectHelpers";
 import { TranslationContext } from "./useTranslationContext";
 import { useI18nContext } from "./useI18nContext";
 import { useDialogContext } from "./useDialogContext";
@@ -205,13 +206,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
           metadata: xmlMeta,
         } = parseStationeersXml(text);
 
-        const finalMeta: IMetadata = {
-          Language: metadata?.Language || xmlMeta.Language,
-          Code: metadata?.Code || xmlMeta.Code,
-          Font: metadata?.Font || xmlMeta.Font,
-          ExportFileName: metadata?.ExportFileName,
-          OriginalFileName: fileName || metadata?.OriginalFileName || xmlMeta.OriginalFileName,
-        };
+        const finalMeta = resolveFinalMetadata(xmlMeta, metadata, fileName);
 
         // Debug draft recovery
         console.log("Tentando recuperar rascunho para:", finalMeta.Language, finalMeta.Code, finalMeta.OriginalFileName);
@@ -219,31 +214,9 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         const storageKey = generateDraftKey(finalMeta.Language || "", finalMeta.Code || "", finalMeta.OriginalFileName);
         const savedDraft = loadDraft(storageKey);
 
-        const draftTranslations: Record<string, string | { translation: string, original: string }> = savedDraft.translations || {};
         console.log(t('messages.draftRecovered', { lang: finalMeta.Language || "" }));
 
-        const initialized: IEntry[] = parsedEntries.map((e) => {
-          const combinedKey = `${e.section}|${e.key}`;
-          const draftEntry = draftTranslations[combinedKey];
-
-          let savedValue: string | undefined;
-          let prevOriginal: string | undefined;
-
-          if (draftEntry) {
-            savedValue = typeof draftEntry === 'string' ? draftEntry : draftEntry.translation;
-            prevOriginal = typeof draftEntry === 'string' ? undefined : draftEntry.original;
-          }
-
-          const hasChanged = prevOriginal !== undefined && prevOriginal !== e.original;
-
-          return {
-            ...e,
-            savedTranslation: savedValue,
-            translation: savedValue || undefined,
-            status: hasChanged ? ("edited" as const) : (savedValue ? ("saved" as const) : ("unchanged" as const)),
-            originalAtTranslation: prevOriginal || (savedValue ? e.original : undefined),
-          };
-        });
+        const initialized = initializeEntriesWithDraft(parsedEntries, savedDraft);
 
         const uniqueSections = Array.from(
           new Set(parsedEntries.map((e) => e.section)),
